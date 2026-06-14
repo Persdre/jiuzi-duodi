@@ -105,6 +105,12 @@
   @keyframes fadein{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
   .fadein{animation:fadein .38s ease}
   #continueBar{animation:fadein .3s ease}
+  .delta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0;padding:9px 11px;background:rgba(120,90,40,.1);border-radius:8px;animation:fadein .4s ease}
+  .dlbl{font-size:12px;color:#7a5a28;letter-spacing:.12em;margin-right:4px}
+  .dchip{font-size:12.5px;padding:3px 10px;border-radius:12px;font-weight:700;letter-spacing:.03em}
+  .dchip.up{background:rgba(90,110,84,.2);color:#3f5238}
+  .dchip.dn{background:rgba(158,43,37,.14);color:var(--zhu)}
+  .dchip.flag{background:var(--gold);color:#2a2114}
   .err{color:var(--zhu);font-size:13px;margin-top:8px}
   .ending h2{font-size:26px;text-align:center;color:var(--zhu)}
   .ending .verdict{text-align:center;font-size:15px;color:#54442a;letter-spacing:.1em;margin-bottom:10px}
@@ -236,6 +242,7 @@
       <div class="narr" id="scene"></div>
       <div id="zhupi"></div>
       <div id="court"></div>
+      <div id="delta"></div>
       <div id="dialogue"></div>
     </div>
 
@@ -982,9 +989,11 @@ function nextScene(){
   document.getElementById("dialogue").innerHTML="";
   document.getElementById("zhupi").innerHTML="";
   document.getElementById("court").innerHTML="";
+  document.getElementById("delta").innerHTML="";
   document.getElementById("plots").innerHTML="";
   document.getElementById("affairs").innerHTML="";
   S.affairs=[]; S.affairsDone={};
+  S.turnStart={stats:{...S.stats}, relations:{...S.relations}, flags:new Set(S.flags)};
   document.getElementById("action").value="";
   resetTalk();
 
@@ -1044,6 +1053,7 @@ async function takeAction(actionText){
       `<div class="court">诸子闻讯 · ${escapeHtml(r.诸子动向)}</div>`;
     pushChronicle((r.定性?`〔${r.定性}〕`:"")+(actionText.length>22?actionText.slice(0,22)+"…":actionText));
     renderHUD();
+    renderDelta();
 
     // 推进:先让玩家把推演结果看完,点「继续」才进下一年(连接不再断)
     if(r.危机预告) document.getElementById("scene").textContent+="\n\n（隐忧：" + r.危机预告 + "）";
@@ -1067,6 +1077,16 @@ document.getElementById("doBtn").onclick=()=>{
 };
 document.getElementById("restBtn").onclick=()=>takeAction("按兵不动,蛰伏观望,本年不有任何显眼之举,只低调办好分内差事。");
 function fadeScene(){ const el=document.getElementById("scene"); if(!el)return; el.classList.remove("fadein"); void el.offsetWidth; el.classList.add("fadein"); }
+// 本回合状态变化提示(从回合开始到现在的净涨跌:含要务/密会/行事)
+function renderDelta(){
+  const el=document.getElementById("delta"); if(!el) return;
+  if(!S.turnStart){ el.innerHTML=""; return; }
+  const parts=[];
+  STAT_KEYS.forEach(k=>{ const d=S.stats[k]-S.turnStart.stats[k]; if(d){ const good=(k==="猜忌")?d<0:d>0; parts.push(`<span class="dchip ${good?'up':'dn'}">${k} ${d>0?'+'+d:d}</span>`); }});
+  RELATION_KEYS.forEach(k=>{ const d=S.relations[k]-(S.turnStart.relations[k]||0); if(d) parts.push(`<span class="dchip ${d>0?'up':'dn'}">${k} ${d>0?'+'+d:d}</span>`); });
+  [...S.flags].filter(f=>!S.turnStart.flags.has(f)).forEach(f=> parts.push(`<span class="dchip flag">＋${escapeHtml(f)}</span>`));
+  el.innerHTML = parts.length ? `<div class="delta"><span class="dlbl">本回合变化</span>${parts.join("")}</div>` : "";
+}
 document.getElementById("continueBtn").onclick=()=>{
   document.getElementById("continueBar").classList.add("hidden");
   document.getElementById("actZone").style.display="";
