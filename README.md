@@ -6,7 +6,7 @@
   打开就能点「免费试玩」,两分钟看完整流程,<b>无需 API key</b>
 </p>
 
-<p align="center"><img src="assets/play.png" width="620" alt="游戏截图"></p>
+<p align="center"><img src="assets/play.png" width="840" alt="游戏截图"></p>
 
 康熙朝,储位空悬,九子夺嫡。你选一位皇子,**康熙、政敌、谋士、权臣全由大模型扮演**——你不点固定选项,而是亲手写密折、结党、装孝子、经营权臣,由"天命推演"模型按真实史情算出后果。
 
@@ -18,13 +18,11 @@
 
 史上八阿哥被雍正削宗籍、改名「阿其那」幽禁而死。在这里,你可以**改写历史**——让他登基。
 
-<p align="center"><img src="assets/eight-wins.png" width="380" alt="八阿哥登基 · 改写历史"></p>
+<p align="center"><img src="assets/eight-wins.png" width="360" alt="八阿哥登基 · 改写历史"></p>
 
 ## 截图
 
-| 选一位皇子入局 | 走到终局 · 一键生成分享卡 |
-|:---:|:---:|
-| <img src="assets/home.png" width="320" alt="首页"> | <img src="assets/ending.png" width="320" alt="结局"> |
+<p align="center"><img src="assets/home.png" width="840" alt="选一位皇子入局"></p>
 
 ## 怎么玩
 

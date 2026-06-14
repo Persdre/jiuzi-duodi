@@ -546,6 +546,7 @@ const DEMO={
 // 试玩结局按真实判定结果选词(真有输赢,不再写死登基)
 const DEMO_ENDINGS={
   登基:{结语:"你后来居上,在畅春园那一夜定鼎乾坤。诸兄争得越凶,败得越惨——大阿哥一句狠话钉死自己,八阿哥一只死鹰烧光人望。你不争,反倒争到了那把椅子。不争是争,如是而已。",金句:"诸子争得头破血流,赢的偏是那个不争的。"},
+  改写登基:{结语:"史册之上,你本该是那个输得最惨的人。可这一局,你机关算尽、步步为营,硬生生把自己送上了那把龙椅。史书翻到这一页,被你重写了。",金句:"史书写你输,这一局你偏要赢。"},
   从龙:{结语:"你押对了要扶的人,从龙之功、鸡犬升天——只是这泼天富贵底下,也埋着新君的猜忌。",金句:"押对了人半生富贵,押错了人万劫不复。"},
   铁帽子:{结语:"你不争那把椅子,却争成了离它最近的人——世袭罔替的铁帽子王,从龙第一。",金句:"不争那把椅子,争成离它最近的人。"},
   善终:{结语:"你没能登极,却也避开了清算,以亲王之尊富贵终老。在这血腥的棋局里活下来,本身就是一种本事。",金句:"没赢,但也没输——活到最后就是赢。"},
@@ -1141,7 +1142,7 @@ async function finish(){
   let isNewEnding=false, freshAch=[];
   if(!S.demo){ isNewEnding=!getUnlocked().includes(end.key); addUnlocked(end.key); freshAch=checkAchievements(end, rewrote); }
   let narr="", jin=end.verdict;
-  if(S.demo){ const de=DEMO_ENDINGS[end.key]||DEMO_ENDINGS.夺爵; narr=de.结语; jin=de.金句; }
+  if(S.demo){ const de=(end.key==="登基"&&rewrote)?DEMO_ENDINGS.改写登基:(DEMO_ENDINGS[end.key]||DEMO_ENDINGS.夺爵); narr=de.结语; jin=de.金句; }
   else try{
     const sys=`你是史官,为这盘九子夺嫡模拟器写结局。只回 JSON:{"结语":"120~200字,文白相间,苍劲克制,不堆砌","金句":"一句12~22字、能被截图单独转发的狠话,概括此结局的况味"}`;
     const rw=rewrote?`\n注意:历史上${S.prince.name}并未得此结局,这是玩家逆天改命、改写了历史的逆袭,请在结语里写出这份"史册被你改写"的分量。`:"";
