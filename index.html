@@ -163,6 +163,10 @@
 
   <!-- ============ SETUP ============ -->
   <div id="setup">
+    <div class="center" style="margin-bottom:20px">
+      <button class="act" id="demoBtn" style="background:linear-gradient(180deg,var(--jade),#46583f);box-shadow:0 6px 16px rgba(90,110,84,.4)">▶ 先免费试玩一遍 · 无需 API key</button>
+      <div style="font-size:12px;color:var(--gold);margin-top:7px;letter-spacing:.06em">两分钟看完整流程(剧情写死)。想自己执棋、让 AI 真随你而变,再往下填 key。</div>
+    </div>
     <div class="panel">
       <h2>一 · 设定推演引擎 <span class="seal">AI 原生</span></h2>
       <p style="font-size:14px;color:#54442a">
@@ -211,6 +215,7 @@
 
   <!-- ============ GAME ============ -->
   <div id="game" class="hidden">
+    <div id="demoBanner" class="hidden" style="background:var(--jade);color:#fceedb;text-align:center;padding:7px;border-radius:8px;margin-bottom:8px;font-size:13px;letter-spacing:.05em">▶ 试玩模式 · 剧情写死,AI 未真正参与 · 想让 AI 随你而变请回首页填 key</div>
     <div class="hud" id="hud"></div>
     <div class="relbar" id="relbar"></div>
     <div class="yearbar">
@@ -467,8 +472,78 @@ const ENDINGS={
     prompt:"你在夺嫡中失势,新君即位后被夺爵幽禁,郁郁而终。写一段失意者的史官结语。"})
 };
 
+// ---------- 试玩剧本(无需 API key:可交互,但 AI 回应写死) ----------
+const DEMO_QUEUE=[
+  {type:"main",year:1708,key:"一废太子",brief:"塞外木兰,康熙垂泪废黜太子胤礽,储位空悬,诸子心动。你是看似无心大位的四阿哥胤禛。"},
+  {type:"plain",year:1713,key:null,brief:"康熙六旬万寿,千叟宴大赉天下;表面盛世,储位暗涌。正是悄悄经营的好时机。"},
+  {type:"main",year:1722,key:"畅春园之夜",brief:"康熙弥留于畅春园,九门钥匙在隆科多腰间。守在御前、让他替你宣诏者,即得天下。"}
+];
+const DEMO={
+  turn:[
+    { intel:{
+        圣心:"木兰围场,康熙当众垂泪,一把扯下太子的朝珠掷在地上。他环视诸子,那目光像在挑肉——谁先动,谁先死。",
+        诸子:[{皇子:"大阿哥",动向:"急疯了,竟当面奏请『欲诛胤礽,不必出自皇父之手』,康熙气得发抖,当场斥他乱臣贼子。"},{皇子:"八阿哥",动向:"广散钱财,佟国维、马齐已在私下替他数票了。"}],
+        朝臣:[{臣:"佟国维",动向:"串联百官,要联名保举八阿哥做新太子。"}],
+        门人:"你的幕僚戴铎压低声音:四爷,这时候谁蹦得最高,谁就是靶子——您,装。",
+        要务:[
+          {标题:"如何对待废太子",详情:"康熙命你与诸兄弟看守废太子胤礽。落井下石还是雪中送炭?",选项:[
+            {词:"踩太子一脚,附和大阿哥",结果:"康熙冷眼:『连亲兄弟落难都要踏一脚,这样的人朕岂敢托付江山。』圣眷跌、猜忌涨。",变化:{圣眷:-6,猜忌:6}},
+            {词:"反替太子说情,只字不提储位",结果:"康熙怔住,神色一软:『诸子皆欲分其位,独胤禛念其情。』圣眷大涨,记你纯孝。",变化:{圣眷:10,猜忌:-4},标记:["纯孝之名"]}
+          ]},
+          {标题:"八爷党的橄榄枝",详情:"八阿哥遣人抬来满箱厚礼,邀你联手抗衡东宫。",选项:[
+            {词:"婉拒,只回赠一筐自家种的青菜",结果:"你回的是粗茶淡饭,八阿哥一愣。康熙听闻,反觉你清简不党。",变化:{圣眷:3,猜忌:-3}},
+            {词:"笑纳厚礼,虚与委蛇",结果:"礼是收了,把柄也落了。",变化:{党羽:5,猜忌:5}}
+          ]}
+        ]
+      },
+      sim:{叙事:"你既不踩太子,也不入八爷的局,只闷头把户部那摊烂账理清。木兰的夜里,康熙独独留你说话,问的不是国事,是你额头那道伤——『骑马磕的?当差仔细些。』满营皇子,他只心疼了你一个。",康熙之心:"争得最凶的那几个,朕一个都不放心。倒是这个闷葫芦……",属性变化:{圣眷:6,猜忌:-3},定性:"得势",危机预告:"八爷党势大,你越显眼越危险——继续藏。",诸子动向:"大阿哥那句『不必出自皇父之手』,已把自己钉死在康熙心里。"}
+    },
+    { intel:{
+        圣心:"千叟宴上康熙强颜含笑,袖中却攥着一封密报——又是哪个儿子的人在外头惹了事。",
+        诸子:[{皇子:"八阿哥",动向:"进献的海东青到御前竟奄奄一息如将毙。康熙脸都白了,撂下狠话:『自此,朕与胤禩,父子之恩绝矣。』"},{皇子:"十四阿哥",动向:"军功正盛,被点为西北大将军王的热门人选。"}],
+        朝臣:[{臣:"隆科多",动向:"新掌九门,谁的酒都喝,谁的底都不交——他在等一个值得押的人。"}],
+        门人:"戴铎:四爷,八爷自己把自己玩死了。眼下最该做的,是把隆科多焐热——终局那把钥匙,在他手上。",
+        要务:[
+          {标题:"千叟宴献什么",详情:"诸子争献金玉珍玩,博康熙一笑。",选项:[
+            {词:"献万民伞、一卷亲手抄的《孝经》",结果:"诸子争献金玉,独你献孝献俭。康熙摩挲那卷经,半晌没说话。圣眷又涨。",变化:{圣眷:8,猜忌:-2}}
+          ]},
+          {标题:"焐热掌九门的隆科多",详情:"隆科多握着九门钥匙——终局那夜,他一句话定乾坤。怎么把他变成自己人?",选项:[
+            {词:"雪夜亲访,先替他料理一桩家中难事,不提大位",结果:"隆科多没想到你为他奔走,端起酒碗一饮而尽:『四爷这份情,奴才搁心里了。』关系大进。",变化:{},关系:{隆科多:32}}
+          ]}
+        ]
+      },
+      sim:{叙事:"八阿哥一只死鹰,断送了二十年经营;你却在雪夜把隆科多攥进了手心。——试着点上面的「外交·密会」,再和他深谈一回,把他彻底养成你的人。",康熙之心:"八阿哥啊八阿哥,你什么都好,就是太想让所有人都说你好。",属性变化:{圣眷:5,猜忌:-2},定性:"得势",危机预告:"终局将近,务必确保畅春园那夜你在御前。",诸子动向:"一只死鹰,把八爷半生的人望烧成了灰。"}
+    },
+    { intel:{
+        圣心:"康熙气若游丝,已说不出话,枯瘦的手在锦被上徒劳地抓。这一夜,寒得能冻住人心。",
+        诸子:[{皇子:"十四阿哥",动向:"大将军王远在青海大营,八百里加急也赶不回这一夜。"},{皇子:"八阿哥",动向:"被两名侍卫拦在隆宗门外,眼睁睁。"}],
+        朝臣:[{臣:"隆科多",动向:"按着腰间那串九门钥匙,立在帐外,只等你一个眼神。"}],
+        门人:"成败就在今夜——你守在御前,他攥着钥匙。",
+        要务:[
+          {标题:"畅春园这一夜",详情:"康熙弥留,你已守在御榻之前。这最后一搏,怎么走?",选项:[
+            {词:"衣不解带守在御榻前,亲尝汤药",结果:"康熙浑浊的眼,最后落在守在身边的你身上,极轻地点了一下头。",变化:{圣眷:12,猜忌:-6},标记:["纯孝之名","御前宣诏"]}
+          ]}
+        ]
+      },
+      sim:{叙事:"三更,康熙的手在你掌心轻轻一搦,气绝。帐帘掀开,隆科多按剑而入,环视满殿亲王,一字一顿宣读遗诏——『皇四子胤禛,人品贵重,深肖朕躬,著继皇帝位。』殿外北风骤起,诸王面如死灰。这一夜,你赢了。",康熙之心:"传位于你。这江山,交到一个不争的人手里,朕,闭得上眼了。",属性变化:{圣眷:20,猜忌:-12},新增标记:["纯孝之名","御前宣诏"],定性:"得势",危机预告:"——",诸子动向:"九门落锁,大局已定。"}
+    }
+  ],
+  talk:{回话:"四爷言重了。奴才掌这九门钥匙,凭的是圣眷,也是看人。如今这几位爷,一个比一个急,唯独四爷沉得住气。这份情,奴才搁心里了。",动态:"隆科多嘴上谨慎,眼里却已把你列作那个值得押的人。",好感变化:18},
+  moves:[
+    {名:"以退为进",行:"不争不显,只把分内差事办到极致,静待圣心。"},
+    {名:"纯孝立身",行:"在康熙面前尽孝,绝口不提储位。"},
+    {名:"暗结隆科多",行:"私下结纳掌九门的隆科多,为终局铺路。"}
+  ],
+  talkSug:[
+    {式:"许诺",词:"公今日之谊,他日我必以国士相报。"},
+    {式:"探口风",词:"如今诸子纷争,公心里可有属意之人?"},
+    {式:"施恩",词:"听闻公府上有难处,我已命人备下,聊表寸心。"}
+  ],
+  ending:{结语:"康熙六十一年冬,胤禛于畅春园承继大统,是为雍正。回看这一路——废太子落难,你不踩;八爷结党,你不入;只一味办差、尽孝、藏锋,把锋芒收到无人提防,却把隆科多悄悄攥在手心。大阿哥一句狠话钉死自己,八阿哥一只死鹰烧光人望——他们争得越凶,败得越惨。你不争,反倒争到了那把椅子。不争是争,如是而已。",金句:"诸子争得头破血流,赢的偏是那个不争的。"}
+};
+
 // ---------- 运行态 ----------
-let S=null; // {prince, stats, flags:Set, 记忆:[], queue, qi, year, plainCount, talk:{target,history}}
+let S=null; // {prince, stats, flags:Set, 记忆:[], queue, qi, year, plainCount, talk:{target,history}, demo}
 let cfg={};
 
 // ---------- 选皇子 ----------
@@ -549,6 +624,7 @@ function worldBrief(){
 
 // ---------- 史官推演(意图判断 + 状态转换层) ----------
 async function simulate(action,sceneTitle){
+  if(S.demo) return DEMO.turn[Math.min(S.qi,DEMO.turn.length-1)].sim;
   const sys=`你是这盘九子夺嫡模拟器的"天命推演"史官引擎,职责是把玩家这一步行动,折算成对一位皇子处境的真实后果。严格遵守三条:
 一·状态约束:一切须合康熙朝史情与人物逻辑。康熙英察多疑,皇子越急于露出夺嫡之心、越结党市恩,猜忌涨得越快;务实办差、表纯孝、不显山露水者,圣眷稳而猜忌降。兵权、财力、党羽不会凭空暴涨。
 二·意图判断:若玩家行动荒诞越界(穿越、修仙、掏手机、造原子弹、当众宣称要当皇帝、行刺康熙等),不直接满足他,但要用好笑、有戏剧张力、值得截图的方式演绎其荒诞后果——像崇祯模拟器那样冷峻又好笑,让他自食其果(贻笑大方、被当众斥为疯癫、猜忌暴涨乃至下狱)。叙事里把这份荒诞和反差写足、写出梗,而不是干巴巴扣分。
@@ -585,6 +661,7 @@ async function simulate(action,sceneTitle){
 
 // ---------- 朝局简报(回合开始,看康熙/诸子/朝臣的动态) ----------
 async function courtBriefing(){
+  if(S.demo) return DEMO.turn[Math.min(S.qi,DEMO.turn.length-1)].intel;
   const sys=`你是九子夺嫡的"朝局"叙事官,据当前局势用第三人称简报本年天下动态,贴合康熙朝史情与各皇子、各重臣真实处境,鲜活具体、点名点姓、不空泛。只回 JSON:
 {
  "圣心":"康熙近况与心思一两句:健康、近来在意何事、对诸子的态度倾向",
@@ -600,6 +677,7 @@ async function courtBriefing(){
 }
 // 回合开始:朝局动态 + 本年2-3桩要务(每桩自带应对选项与预算好的后果),一次调用拿全
 async function turnIntel(){
+  if(S.demo) return DEMO.turn[Math.min(S.qi,DEMO.turn.length-1)].intel;
   const sys=`你是九子夺嫡的"朝局"叙事官。据当前局势与本年真实史情,给出本年天下动态,以及同时摊到这位皇子面前的2-3桩要务(让每一年都有好几件事要应付)。要务须扎根本年真实史情(用户消息给出),围绕真实的差事、案件、人物展开,不要架空穿越。称谓按与玩家的长幼,勿弄错兄弟。只回 JSON:
 {
  "圣心":"康熙近况与心思一两句",
@@ -693,6 +771,7 @@ function talkPersona(target){
   return (map[target]||map["康熙"])+" 务必留在角色里,不得跳出,不得替玩家拿主意。你有自己的利害与算计,会回应玩家的招揽、试探与周旋但未必上钩。回话80~160字。";
 }
 async function talkReply(target,userText){
+  if(S.demo) return DEMO.talk;
   const sys=talkPersona(target)+` 只回 JSON:{"回话":"你这个角色的原话(80~160字)","动态":"一句第三人称旁白:这番密会引起的细微变化或反应","好感变化":一个 -10 到 10 的整数,表示这次密会后你(此角色)对玩家好感的升降}`;
   const hist=(S.talk.history||[]).slice(-6).map(h=>`${h.who}:${h.text}`).join("\n");
   const usr=`${worldBrief()}\n\n你正与${S.prince.name}密会。此前对话:\n${hist||"(刚开始)"}\n\n${S.prince.name}对你说:「${userText}」\n\n以你的身份回话,并给一句动态旁白。只回 JSON。`;
@@ -817,12 +896,14 @@ document.getElementById("startBtn").onclick=()=>{
   try{localStorage.setItem("jzdd_key",cfg.key);}catch(e){}
   beginGame(selectedPrince);
 };
-function beginGame(p){
+document.getElementById("demoBtn").onclick=()=>{ beginGame(PRINCES.find(x=>x.id==="yinzhen"), true); };
+function beginGame(p, demo){
   S={prince:p, stats:{...p.start}, flags:new Set(), 记忆:[], relations:startRelations(p.id),
-     queue:buildQueue(), qi:0, year:START_YEAR, plainCount:0, affairs:[], affairsDone:{}, talkCount:0, talk:{target:null,history:[]}, scene:null};
+     queue: demo?DEMO_QUEUE.slice():buildQueue(), qi:0, year: demo?DEMO_QUEUE[0].year:START_YEAR, plainCount:0, affairs:[], affairsDone:{}, talkCount:0, talk:{target:null,history:[]}, scene:null, demo:!!demo};
   document.getElementById("setup").classList.add("hidden");
   document.getElementById("ending").classList.add("hidden");
   document.getElementById("game").classList.remove("hidden");
+  document.getElementById("demoBanner").classList.toggle("hidden", !demo);
   document.getElementById("whoami").textContent=p.name+" · "+p.title;
   document.getElementById("chronicle").innerHTML="";
   document.getElementById("talkTarget").innerHTML="";   // 防止同会话再来一局时选项重复
@@ -895,7 +976,7 @@ function nextScene(){
     brief=item.brief;
   }else{
     title=`${item.year} · 平年`;
-    brief=PLAINS[S.plainCount % PLAINS.length];
+    brief=item.brief || PLAINS[S.plainCount % PLAINS.length];
     S.plainCount++;
   }
   S.scene={title,brief,isMain,key:item.key};
@@ -1009,6 +1090,7 @@ document.getElementById("talkSend").onclick=()=>doTalk(document.getElementById("
 
 // 密会话术(像献策一样,不用打字,点一句直接说出去)
 async function suggestTalk(){
+  if(S.demo) return DEMO.talkSug;
   const target=document.getElementById("talkTarget").value;
   const sys=`你是皇子幕僚。玩家要去密会【${target}】。给三到四句可直接说出口的话,每句配一个贴合此人身份与当前局势的"意图"——不要只用拉拢/试探/离间这三种笼统词,按对象挑更精准的策略:
 · 权臣门人(隆科多/年羹尧/佟国维):许诺前程、画饼、探口风、施恩、托付、敲打
@@ -1042,13 +1124,13 @@ function isRealHistory(end){
 }
 async function finish(){
   const end=computeEnding();
-  const isNewEnding=!getUnlocked().includes(end.key);
-  addUnlocked(end.key);
   const isWin=(end.key==="登基"||end.key==="铁帽子"||end.key==="从龙");
   const rewrote=isWin && !isRealHistory(end);
-  const freshAch=checkAchievements(end, rewrote);
+  let isNewEnding=false, freshAch=[];
+  if(!S.demo){ isNewEnding=!getUnlocked().includes(end.key); addUnlocked(end.key); freshAch=checkAchievements(end, rewrote); }
   let narr="", jin=end.verdict;
-  try{
+  if(S.demo){ narr=DEMO.ending.结语; jin=DEMO.ending.金句; }
+  else try{
     const sys=`你是史官,为这盘九子夺嫡模拟器写结局。只回 JSON:{"结语":"120~200字,文白相间,苍劲克制,不堆砌","金句":"一句12~22字、能被截图单独转发的狠话,概括此结局的况味"}`;
     const rw=rewrote?`\n注意:历史上${S.prince.name}并未得此结局,这是玩家逆天改命、改写了历史的逆袭,请在结语里写出这份"史册被你改写"的分量。`:"";
     const usr=`${worldBrief()}\n\n【判定结局】${end.title}\n【写作要求】${end.prompt}${rw}`;
@@ -1071,8 +1153,13 @@ async function finish(){
   document.getElementById("reviewBtn").textContent="查看复盘";
   document.getElementById("histBtn").textContent="揭秘真实历史 · 含剧透";
   const u=getUnlocked();
-  document.getElementById("endCodex").textContent=(isNewEnding?"✦ 新结局解锁 · ":"")+`结局图鉴 ${u.length} / ${ENDING_CODEX.length}`;
-  document.getElementById("endAch").textContent=freshAch.length?("✦ 解锁成就 · "+freshAch.map(a=>a.name).join("、")):"";
+  if(S.demo){
+    document.getElementById("endCodex").textContent="";
+    document.getElementById("endAch").innerHTML='🎮 这是试玩(剧情写死,AI 没真参与)。想自己执棋、让 AI 真随你而变?<b>回首页选服务商填 API key,一局几毛钱。</b>';
+  }else{
+    document.getElementById("endCodex").textContent=(isNewEnding?"✦ 新结局解锁 · ":"")+`结局图鉴 ${u.length} / ${ENDING_CODEX.length}`;
+    document.getElementById("endAch").textContent=freshAch.length?("✦ 解锁成就 · "+freshAch.map(a=>a.name).join("、")):"";
+  }
   box.scrollIntoView({behavior:"smooth"});
 }
 // 复盘 / 史实揭秘:点开才看,不剧透
@@ -1094,6 +1181,7 @@ document.getElementById("histBtn").onclick=()=>{
 
 // ---------- AI 献三策(降低书写门槛,增强互动) ----------
 async function suggestMoves(){
+  if(S.demo) return DEMO.moves;
   const sys=`你是皇子的幕僚谋士。针对当前情景,给出三条风格迥异、各有利弊的可行之策(如:激进结党 / 稳健办差 / 以退为进)。只回 JSON:{"计":[{"名":"四字短名","行":"一句话具体行动,可直接当作玩家的行动原话,30字内"}]}`;
   const usr=`${worldBrief()}\n\n【本回合情景】${S.scene.title} — ${S.scene.brief}\n给三条计策。`;
   const out=await callLLM([{role:"system",content:sys},{role:"user",content:usr}],{json:true,temp:0.95});
