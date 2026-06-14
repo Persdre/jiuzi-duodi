@@ -140,6 +140,8 @@
   .aff-opt.chosen{background:var(--zhu);color:#fceedb;border-color:var(--zhu);opacity:1}
   .aff-r{font-size:13px;color:var(--jade)}
   .aff-r:not(:empty){border-top:1px dashed #c4ab78;padding-top:6px;margin-top:7px}
+  .affair.enc{border-color:var(--gold);background:linear-gradient(180deg,#f6edd3,#efe1bd);box-shadow:0 6px 20px rgba(176,141,79,.3)}
+  .enc-badge{display:inline-block;color:#8a6a1e;border:1px solid var(--gold);border-radius:4px;font-size:11px;padding:1px 8px;letter-spacing:.3em;margin-bottom:7px}
   #plots{display:flex;flex-direction:column;gap:7px;margin:8px 0}
   .plot-chip{text-align:left;background:#efe4cc;border:1px solid #c4ab78;border-radius:8px;padding:8px 12px;cursor:pointer;color:#3a2a16;font-family:inherit;font-size:13.5px;line-height:1.5}
   .plot-chip:hover{border-color:var(--zhu);background:#f6eed8}
@@ -416,6 +418,70 @@ const TALENTS=[
   {id:"wenming",name:"文名满朝",desc:"才学动公卿 · 起手贤名+16、圣眷+4",stats:{贤名:16,圣眷:4}},
   {id:"muliao",name:"幕僚得力",desc:"门下能人辈出 · 起手党羽+8、朝堂+6",stats:{党羽:8,朝堂:6}}
 ];
+
+// 奇遇:平年低概率触发的随机事件(借鉴人生重开的随机性,增重玩与梗,后果写死不额外调AI)
+const ENCOUNTERS=[
+  {id:"xiangshi",标题:"术士登门",详情:"江湖相士张明德求见,屏退左右后低声道:『贝勒爷有天子之相。』",选项:[
+    {词:"大惊失色,轰出去并报官",结果:"你不敢沾这等话,反得『谨慎安分』之名。",变化:{圣眷:4,猜忌:-5}},
+    {词:"屏息细听,重金封口",结果:"心动了——可此话一旦泄露,便是窥伺大位的铁证。",变化:{党羽:4,猜忌:12}}
+  ]},
+  {id:"wangqi",标题:"府现王气",详情:"钦天监一名小官私下密报:夜观天象,你府邸方位隐隐有王气上腾。",选项:[
+    {词:"主动奏报康熙,自陈惶恐",结果:"你抢先把话挑明,康熙反赞你坦荡无私。",变化:{圣眷:8,猜忌:-6}},
+    {词:"秘而不宣,暗自欢喜",结果:"你压住了这话,却压不住渐渐膨胀的野心。",变化:{猜忌:10}}
+  ]},
+  {id:"xiyang",标题:"西洋奇器",详情:"传教士进献一架能望远的千里镜,京中皇子争相求购。",选项:[
+    {词:"转献康熙,投其所好",结果:"康熙正喜西学,把玩良久,赏你不少。",变化:{圣眷:7}},
+    {词:"转赠隆科多,结个善缘",结果:"隆科多收下这稀罕物,记了你一份人情。",变化:{},关系:{隆科多:14}},
+    {词:"自己留着钻研历算",结果:"你沉迷格物,落了个『玩物丧志』的闲话。",变化:{贤名:3,圣眷:-3}}
+  ]},
+  {id:"menren",标题:"门人惹祸",详情:"你府上一名包衣仗势,在闹市纵马踩死了人,苦主击鼓鸣冤。",选项:[
+    {词:"大义灭亲,交刑部严办",结果:"你壮士断腕,清名保住了,门下却寒了心。",变化:{贤名:8,党羽:-8,圣眷:3}},
+    {词:"花银子私下摆平苦主",结果:"钱能消灾,却也落了把柄在人手里。",变化:{财力:-10,猜忌:8}},
+    {词:"动用关系压下此案",结果:"案子压住了,『纵奴行凶』的风声却飘进了御前。",变化:{党羽:5,猜忌:11}}
+  ]},
+  {id:"zhenzai",标题:"某省大灾",详情:"黄河决口,流民塞道,朝廷赈银迟迟未到。你手上正好有笔闲银。",选项:[
+    {词:"自掏腰包,开仓赈济",结果:"你散尽私财活人无数,贤名圣眷俱涨,只是荷包空了。",变化:{财力:-15,贤名:12,圣眷:6}},
+    {词:"循例观望,不出头",结果:"你没担这风险,也没得这名声。",变化:{}}
+  ]},
+  {id:"taiyi",标题:"太医院线人",详情:"你早年结交的一位太医,悄悄递来康熙近日的脉案。",选项:[
+    {词:"借此早察圣体,预作绸缪",结果:"你比谁都早知道圣躬虚实——这是终局的先手。",变化:{},标记:["御前宣诏"]},
+    {词:"婉拒,窥伺圣躬乃大罪",结果:"你不敢碰这条线,稳妥但失了先机。",变化:{猜忌:-4}}
+  ]},
+  {id:"yexiang",标题:"兄弟夜访",详情:"一位素来与你不睦的皇子,竟在深夜屏退随从,孤身来访。",选项:[
+    {词:"推心置腹,结一时之盟",结果:"你们把酒言欢——只是这盟约,谁也不知能撑几天。",变化:{党羽:8,猜忌:4}},
+    {词:"滴水不漏,只叙闲话",结果:"你不接他的话茬,他悻悻而归,却也抓不到你把柄。",变化:{猜忌:-3}},
+    {词:"反向套他的底",结果:"几杯下肚,你套出了他的盘算——情报到手。",变化:{党羽:3}}
+  ]},
+  {id:"baxieyan",标题:"八爷设宴",详情:"八阿哥大宴在京诸王公,请柬也送到了你府上。去,还是不去?",选项:[
+    {词:"赴宴,席间广结善缘",结果:"你与满座王公谈笑风生,党羽是宽了,可康熙最厌这般结交。",变化:{党羽:8,猜忌:9}},
+    {词:"称病不去,闭门读书",结果:"你避开了是非之地,八爷一系却记了你一笔。",变化:{猜忌:-5}}
+  ]},
+  {id:"luoshui",标题:"冬猎落水",详情:"塞外冬猎,你坐骑受惊,连人带马跌进冰河,众目睽睽。",选项:[
+    {词:"强忍伤痛,爬起叩首谢罪",结果:"你浑身湿透仍叩首请罪,康熙又心疼又赞你刚毅,亲赐御医。",变化:{圣眷:9,猜忌:-3}},
+    {词:"借机告病,博取怜惜",结果:"你卧床数月,圣眷得了点,办差的机会却丢了。",变化:{圣眷:4,朝堂:-4}}
+  ]},
+  {id:"hegong",标题:"河工回扣",详情:"你督办河工,底下人捧来一本『孝敬』账,数目惊人,只等你点头。",选项:[
+    {词:"分文不取,全数充公",结果:"你一两不沾,康熙听闻,叹『此子可托财权』。",变化:{圣眷:8,贤名:6,财力:-4}},
+    {词:"睁只眼闭只眼,中饱私囊",结果:"荷包鼓了,贪墨的影子却落进了御史的折子。",变化:{财力:18,猜忌:11}}
+  ]},
+  {id:"tongyao",标题:"市井童谣",详情:"街头小儿传唱起一首怪童谣,字字暗指你将登大宝。",选项:[
+    {词:"严令查禁,缉拿造谣者",结果:"你雷霆查禁,反显得心里没鬼,猜忌稍解。",变化:{猜忌:-6}},
+    {词:"窃喜,任其流传",结果:"你嘴上不说,脸上的得意却没逃过密探的眼。",变化:{猜忌:9}}
+  ]},
+  {id:"jinshu",标题:"夺嫡禁书",详情:"民间冒出一本影射夺嫡的话本,把你写成众望所归的明主,正悄悄流传。",选项:[
+    {词:"上报销毁,撇清干系",结果:"你主动撇清,康熙见你不慕虚名,疑心稍解。",变化:{猜忌:-7,贤名:-2}},
+    {词:"暗中推波助澜",结果:"民间声望涨了,可『市恩收买人心』最犯康熙之忌。",变化:{贤名:8,猜忌:10}}
+  ]}
+];
+function rollEncounter(){ return Math.random() < 0.55; }
+function pickEncounter(){
+  S.usedEnc = S.usedEnc || [];
+  const avail = ENCOUNTERS.filter(e=>!S.usedEnc.includes(e.id));
+  if(!avail.length) return null;
+  const e = avail[Math.floor(Math.random()*avail.length)];
+  S.usedEnc.push(e.id);
+  return {enc:true, 标题:e.标题, 详情:e.详情, 选项:e.选项};
+}
 
 const STAT_KEYS=["圣眷","猜忌","朝堂","兵权","贤名","党羽","财力"];
 const STAT_DESC={圣眷:"康熙的宠信",猜忌:"康熙的疑心",朝堂:"百官支持",兵权:"军事实力",贤名:"士林民望",党羽:"核心党羽",财力:"可动用之银"};
@@ -785,7 +851,9 @@ async function loadTurn(){
   try{
     const j=await turnIntel();
     renderCourtPanel(j);
-    renderAffairs(j.要务);
+    let list = Array.isArray(j.要务)?j.要务.slice():[];
+    if(!S.demo && S.scene && !S.scene.isMain && rollEncounter()){ const e=pickEncounter(); if(e) list.unshift(e); }
+    renderAffairs(list);
   }catch(e){ document.getElementById("courtBody").innerHTML='<span class="cmini">朝局难测(接口未应)。</span>'; document.getElementById("affairs").innerHTML='<span class="cmini">本年要务难测(接口未应)。</span>'; }
 }
 async function refreshCourt(){ try{ renderCourtPanel(await courtBriefing()); }catch(e){} }
@@ -796,10 +864,10 @@ function renderAffairs(list){
   const box=document.getElementById("affairs");box.innerHTML="";
   if(!S.affairs.length){ box.innerHTML='<span class="cmini">本年朝中平静,无大事相扰。</span>'; return; }
   S.affairs.forEach((ev,idx)=>{
-    const card=document.createElement("div");card.className="affair";
+    const card=document.createElement("div");card.className="affair"+(ev.enc?" enc":"");
     let opts="";
     (ev.选项||[]).forEach((o,oi)=>{ opts+=`<button class="aff-opt" data-i="${idx}" data-o="${oi}">${escapeHtml(o.词||"")}</button>`; });
-    card.innerHTML=`<div class="aff-t">${escapeHtml(ev.标题||"要务")}</div><div class="aff-d">${escapeHtml(ev.详情||"")}</div><div class="aff-opts">${opts}</div><div class="aff-r"></div>`;
+    card.innerHTML=`${ev.enc?'<div class="enc-badge">✦ 奇 遇</div>':''}<div class="aff-t">${escapeHtml(ev.标题||"要务")}</div><div class="aff-d">${escapeHtml(ev.详情||"")}</div><div class="aff-opts">${opts}</div><div class="aff-r"></div>`;
     box.appendChild(card);
   });
   box.querySelectorAll(".aff-opt").forEach(b=> b.onclick=()=>resolveAffair(+b.dataset.i,+b.dataset.o,b));
@@ -810,7 +878,7 @@ function resolveAffair(i,o,btn){
   const opt=(ev.选项||[])[o]; if(!opt) return;
   S.affairsDone[i]=opt;
   if(opt.变化){for(const k in opt.变化){if(STAT_KEYS.includes(k)){
-    let dlt=Number(opt.变化[k]||0); if(k==="猜忌"&&dlt>8)dlt=8;
+    let dlt=Number(opt.变化[k]||0); if(k==="猜忌"&&dlt>14)dlt=14;
     S.stats[k]=Math.max(0,Math.min(100,(S.stats[k]||0)+dlt));}}}
   if(Array.isArray(opt.标记)) opt.标记.forEach(t=>t&&S.flags.add(t));
   if(opt.关系){for(const k in opt.关系){if(RELATION_KEYS.includes(k)){
