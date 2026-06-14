@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>九子夺嫡模拟器 · 康熙朝</title>
+<style>
+  :root{
+    --ink:#14110d; --ink2:#211b14; --paper:#e9dec5; --paper2:#ddd0b2;
+    --zhu:#9e2b25; --zhu2:#c2412f; --gold:#b08d4f; --jade:#5a6e54;
+    --shadow:rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #2a2118 0%, transparent 60%),
+      linear-gradient(180deg,#100d09,#1c1611);
+    color:var(--paper);
+    font-family:"Noto Serif SC","Songti SC",STSong,"SimSun",serif;
+    line-height:1.7; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:980px;margin:0 auto;padding:28px 18px 80px}
+  h1{font-size:40px;letter-spacing:.35em;text-align:center;margin:.2em 0 .1em;
+     color:var(--paper);text-shadow:0 2px 0 #000,0 0 30px rgba(176,141,79,.25)}
+  .sub{text-align:center;color:var(--gold);letter-spacing:.25em;margin-bottom:8px;font-size:14px}
+  .rule{height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:16px 0 26px}
+  .seal{display:inline-block;border:2px solid var(--zhu);color:var(--zhu);
+        padding:1px 7px;border-radius:4px;font-size:12px;letter-spacing:.2em;
+        transform:rotate(-3deg)}
+
+  /* panels */
+  .panel{background:linear-gradient(180deg,var(--paper),var(--paper2));
+    color:#2a2114;border-radius:10px;padding:20px 22px;margin:14px 0;
+    box-shadow:0 10px 30px var(--shadow), inset 0 0 0 1px rgba(120,90,40,.25);position:relative}
+  .panel:before{content:"";position:absolute;inset:6px;border:1px solid rgba(120,90,40,.28);border-radius:6px;pointer-events:none}
+  .panel h2{margin:.1em 0 .5em;font-size:20px;letter-spacing:.12em;color:#3a2a16}
+  .panel p{margin:.4em 0}
+
+  /* setup */
+  .cfg{display:grid;grid-template-columns:120px 1fr;gap:10px 14px;align-items:center}
+  .cfg label{color:#4a3a20;font-size:14px;letter-spacing:.1em}
+  .cfg input,.cfg select{width:100%;padding:9px 11px;border:1px solid #b09a6e;border-radius:6px;
+    background:#f4ecd8;color:#2a2114;font-family:inherit;font-size:14px}
+  .hint{font-size:12px;color:#6b5836;grid-column:2}
+
+  .princes{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:8px}
+  .pcard{background:#f1e7cf;border:1px solid #b89f6f;border-radius:9px;padding:13px 15px;cursor:pointer;
+    transition:.15s;position:relative;color:#2a2114}
+  .pcard:hover{transform:translateY(-2px);box-shadow:0 8px 22px var(--shadow);border-color:var(--zhu)}
+  .pcard.sel{border-color:var(--zhu);box-shadow:0 0 0 2px var(--zhu) inset}
+  .pcard .nm{font-size:18px;font-weight:700;letter-spacing:.08em}
+  .pcard .ti{color:var(--zhu);font-size:13px;margin-left:6px}
+  .pcard .di{position:absolute;top:12px;right:13px;color:var(--zhu);letter-spacing:.05em;font-size:12px}
+  .pcard .ds{font-size:13px;color:#54442a;margin-top:5px}
+  .pcard .st{font-size:11px;color:#6b5836;margin-top:7px;letter-spacing:.04em}
+  .pcard .xf{font-size:12px;color:var(--zhu);margin-top:7px;padding-top:6px;border-top:1px dashed #c9b388;letter-spacing:.02em}
+
+  button.act{background:linear-gradient(180deg,var(--zhu2),var(--zhu));color:#fceedb;border:none;
+    padding:12px 26px;border-radius:8px;font-family:inherit;font-size:16px;letter-spacing:.18em;
+    cursor:pointer;box-shadow:0 6px 16px rgba(158,43,37,.4)}
+  button.act:hover{filter:brightness(1.08)}
+  button.act:disabled{opacity:.5;cursor:not-allowed}
+  .center{text-align:center;margin-top:18px}
+
+  /* game HUD */
+  .hud{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:6px 0 2px}
+  .stat{background:#f1e7cf;border:1px solid #bda473;border-radius:7px;padding:7px 9px;color:#2a2114}
+  .stat .k{font-size:12px;color:#6b5836;letter-spacing:.08em;display:flex;justify-content:space-between}
+  .stat .bar{height:7px;background:#cdb98a;border-radius:4px;overflow:hidden;margin-top:5px}
+  .stat .bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--jade),#7d9170)}
+  .stat.danger .bar > i{background:linear-gradient(90deg,var(--zhu),var(--zhu2))}
+  .relbar{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:8px;margin:2px 0 4px}
+  .rel{background:#efe4cc;border:1px solid #c9b388;border-radius:7px;padding:6px 10px;color:#2a2114}
+  .rel .rk{font-size:12px;color:#6b5836;display:flex;justify-content:space-between}
+  .rel .rk b{color:var(--zhu)}
+  .rel .rb{height:6px;background:#cdb98a;border-radius:4px;overflow:hidden;margin-top:4px}
+  .rel .rb>i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),#caa85f)}
+  .yearbar{display:flex;justify-content:space-between;align-items:center;color:var(--gold);
+    letter-spacing:.15em;font-size:14px;margin:14px 2px 4px}
+
+  .narr{white-space:pre-wrap;font-size:15.5px}
+  .zhupi{border-left:3px solid var(--zhu);background:rgba(158,43,37,.07);padding:8px 12px;margin:10px 0;
+    color:var(--zhu);font-size:14px;border-radius:0 6px 6px 0}
+  .who{color:var(--zhu);font-weight:700;letter-spacing:.06em}
+  .dlg{background:#efe4cc;border:1px dashed #b89f6f;border-radius:8px;padding:10px 13px;margin:8px 0;color:#33271699}
+  .dlg .line{margin:5px 0;color:#2a2114}
+
+  textarea{width:100%;min-height:74px;padding:11px 13px;border:1px solid #b09a6e;border-radius:8px;
+    background:#f4ecd8;color:#2a2114;font-family:inherit;font-size:15px;resize:vertical}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+  .ghost{background:transparent;border:1px solid #b09a6e;color:#5a4a2c;padding:9px 16px;border-radius:7px;
+    cursor:pointer;font-family:inherit;font-size:14px}
+  .ghost:hover{border-color:var(--zhu);color:var(--zhu)}
+  .ghost.on{background:var(--zhu);color:#fceedb;border-color:var(--zhu)}
+
+  .log{font-size:12.5px;color:#cdbf9f}
+  .log details{margin-top:18px}
+  .log summary{cursor:pointer;color:var(--gold);letter-spacing:.12em}
+  .log li{margin:3px 0;color:#bdb094}
+
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid #fceedb;border-top-color:transparent;
+    border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:8px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .err{color:var(--zhu);font-size:13px;margin-top:8px}
+  .ending h2{font-size:26px;text-align:center;color:var(--zhu)}
+  .ending .verdict{text-align:center;font-size:15px;color:#54442a;letter-spacing:.1em;margin-bottom:10px}
+  .court{border-left:3px solid var(--jade);background:rgba(90,110,84,.1);padding:8px 12px;margin:10px 0;color:#46583f;font-size:13.5px;border-radius:0 6px 6px 0}
+  .cpanel{background:linear-gradient(180deg,#ece3cd,#ddd0b2);border-radius:10px;padding:13px 18px;margin:8px 0 2px;color:#33271a;box-shadow:0 8px 22px var(--shadow),inset 0 0 0 1px rgba(120,90,40,.22)}
+  .cpanel h3{margin:0 0 8px;font-size:13px;letter-spacing:.2em;color:#7a5a28}
+  .cline{font-size:13.5px;margin:5px 0;display:flex;gap:9px;align-items:baseline}
+  .cline .tag{color:var(--zhu);flex:0 0 66px;font-weight:700;letter-spacing:.04em}
+  .cline.kx .tag{color:#7a5a28}
+  .cmini{color:#8a7448;font-size:12px}
+  .codex-chip{font-size:12.5px;padding:5px 11px;border-radius:14px;border:1px solid #c4ab78;color:#8a7448;background:#efe4cc;letter-spacing:.05em}
+  .codex-chip.got{color:#fceedb;background:var(--zhu);border-color:var(--zhu)}
+  .review{background:#efe4cc;border:1px solid #c4ab78;border-radius:9px;padding:14px 16px;margin:12px auto;max-width:460px;text-align:left}
+  .rv-h{font-size:14px;letter-spacing:.1em;color:#7a5a28;font-weight:700}
+  .rv-sub{font-size:12.5px;color:#6b5836;margin:4px 0 8px}
+  .rv-i{font-size:13.5px;margin:4px 0;letter-spacing:.02em}
+  .rv-i.ok{color:#46583f}
+  .rv-i.no{color:var(--zhu)}
+  .rv-c{margin-top:10px;font-size:13.5px;color:#3a2a16;border-top:1px dashed #c4ab78;padding-top:8px;line-height:1.8}
+  .affair{background:#f1e7cf;border:1px solid #c4ab78;border-radius:9px;padding:12px 14px;margin:9px 0}
+  .aff-t{font-size:15px;font-weight:700;color:#3a2a16;letter-spacing:.04em}
+  .aff-d{font-size:13.5px;color:#54442a;margin:5px 0 9px;line-height:1.7}
+  .aff-opts{display:flex;flex-direction:column;gap:6px}
+  .aff-opt{text-align:left;background:#efe4cc;border:1px solid #c4ab78;border-radius:7px;padding:7px 11px;cursor:pointer;color:#3a2a16;font-family:inherit;font-size:13.5px;line-height:1.5}
+  .aff-opt:hover:not(:disabled){border-color:var(--zhu);background:#f6eed8}
+  .aff-opt:disabled{opacity:.5;cursor:default}
+  .aff-opt.chosen{background:var(--zhu);color:#fceedb;border-color:var(--zhu);opacity:1}
+  .aff-r{font-size:13px;color:var(--jade)}
+  .aff-r:not(:empty){border-top:1px dashed #c4ab78;padding-top:6px;margin-top:7px}
+  #plots{display:flex;flex-direction:column;gap:7px;margin:8px 0}
+  .plot-chip{text-align:left;background:#efe4cc;border:1px solid #c4ab78;border-radius:8px;padding:8px 12px;cursor:pointer;color:#3a2a16;font-family:inherit;font-size:13.5px;line-height:1.5}
+  .plot-chip:hover{border-color:var(--zhu);background:#f6eed8}
+  .plot-chip b{color:var(--zhu);margin-right:8px;letter-spacing:.06em}
+  #shareCard{display:none}
+  .scard{max-width:380px;margin:16px auto;background:linear-gradient(180deg,#f3e9cf,#e6d6b2);
+    border:1px solid #b89f6f;border-radius:14px;padding:28px 24px;color:#2a2114;
+    box-shadow:0 14px 40px var(--shadow);position:relative}
+  .scard:before{content:"";position:absolute;inset:9px;border:1px solid rgba(120,90,40,.35);border-radius:9px;pointer-events:none}
+  .scard .cap{text-align:center;color:var(--gold);letter-spacing:.4em;font-size:12px}
+  .scard .who2{text-align:center;font-size:16px;margin-top:12px;color:#54442a;letter-spacing:.1em}
+  .scard .big{text-align:center;font-size:34px;letter-spacing:.18em;color:var(--zhu);margin:8px 0 4px;text-shadow:0 1px 0 #fff}
+  .scard .jin{text-align:center;font-size:16px;color:#3a2a16;margin:16px 6px;line-height:1.85;font-weight:700}
+  .scard .vd{text-align:center;font-size:13px;color:#6b5836;margin:8px 4px}
+  .scard .nums{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 14px;margin:16px 0 6px;font-size:12.5px;color:#54442a}
+  .scard .foot{text-align:center;margin-top:18px;padding-top:13px;border-top:1px dashed #c4ab78;color:var(--zhu);font-size:13px;letter-spacing:.06em}
+  .scard .foot small{display:block;color:#8a7448;letter-spacing:.2em;font-size:11px;margin-top:6px}
+  .capbox{max-width:520px;margin:14px auto 0}
+  .capbox textarea{min-height:168px;font-size:13px}
+  .hidden{display:none}
+  a{color:var(--zhu)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>九子夺嫡</h1>
+  <div class="sub">康 熙 朝 · 夺 嫡 模 拟 器</div>
+  <div class="rule"></div>
+
+  <!-- ============ SETUP ============ -->
+  <div id="setup">
+    <div class="panel">
+      <h2>一 · 设定推演引擎 <span class="seal">AI 原生</span></h2>
+      <p style="font-size:14px;color:#54442a">
+        本局的康熙、政敌、谋士、史官皆由大模型扮演。你不点选项,你<b>亲手写密折、说话、谋划</b>,
+        由"天命推演"模型按 状态约束→意图判断→状态转换 三层算出后果。需填入你自己的 API Key
+        (推荐 DeepSeek,一轮几毛钱)。Key 只存在你本地浏览器,不上传。
+      </p>
+      <div class="cfg">
+        <label>服务商</label>
+        <select id="provider">
+          <option value="deepseek">DeepSeek(推荐·最省)</option>
+          <option value="qwen">通义千问 Qwen</option>
+          <option value="openai">OpenAI 兼容</option>
+          <option value="custom">自定义 Base URL</option>
+        </select>
+        <label>Base URL</label>
+        <input id="baseurl" value="https://api.deepseek.com/v1">
+        <label>模型</label>
+        <input id="model" value="deepseek-chat">
+        <label>API Key</label>
+        <input id="apikey" type="password" placeholder="sk-...">
+        <div class="hint">不知道填什么就保持默认,去 platform.deepseek.com 拿一个 key。</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>二 · 择一皇子入局</h2>
+      <p style="font-size:13px;color:#6b5836">难度越高,康熙的猜忌越难按住。历史最优解藏在四阿哥的"不争是争"里。</p>
+      <div class="princes" id="princes"></div>
+    </div>
+
+    <div class="panel" id="codexPanel">
+      <h2>结局图鉴 <span id="codexCount" style="color:var(--zhu);font-size:14px;letter-spacing:.1em"></span></h2>
+      <p style="font-size:13px;color:#6b5836;margin-top:0">九种皇子,七般结局。换着皇子玩,把"承继大统"到"阿其那·塞思黑"集齐。</p>
+      <div id="codexList" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+      <h2 style="margin-top:18px">成就 <span id="achCount" style="color:var(--zhu);font-size:14px;letter-spacing:.1em"></span></h2>
+      <p style="font-size:13px;color:#6b5836;margin-top:0">把鼠标悬在 ？？？ 上看解锁条件。换着皇子、换着打法,慢慢集。</p>
+      <div id="achList" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+    </div>
+
+    <div class="center">
+      <button class="act" id="startBtn" disabled>入 局</button>
+      <div class="err" id="setupErr"></div>
+    </div>
+  </div>
+
+  <!-- ============ GAME ============ -->
+  <div id="game" class="hidden">
+    <div class="hud" id="hud"></div>
+    <div class="relbar" id="relbar"></div>
+    <div class="yearbar">
+      <span id="whoami"></span>
+      <span id="yearlbl"></span>
+    </div>
+
+    <div class="cpanel" id="courtPanel">
+      <h3>朝 局 · 天 下 动 态</h3>
+      <div id="courtBody"><span class="cmini">观望中…</span></div>
+    </div>
+
+    <div class="panel">
+      <h2 id="sceneTitle">局势</h2>
+      <div class="narr" id="scene"></div>
+      <div id="zhupi"></div>
+      <div id="court"></div>
+      <div id="dialogue"></div>
+    </div>
+
+    <div class="panel" id="affairsPanel">
+      <h2>本年要务 <span style="font-size:12px;color:#6b5836;letter-spacing:.06em">逐桩拿主意,当场见后果</span></h2>
+      <div id="affairs"></div>
+    </div>
+
+    <div class="panel">
+      <div class="row" style="margin-top:0">
+        <button class="ghost" id="talkToggle">外交·密会(因人施策)</button>
+        <span id="talkWho" style="font-size:13px;color:#6b5836"></span>
+      </div>
+      <div id="talkBox" class="hidden">
+        <div class="row">
+          <select id="talkTarget" class="ghost" style="padding:8px 12px"></select>
+          <button class="ghost" id="talkPlotBtn">AI 拟话术</button>
+        </div>
+        <div id="talkPlots"></div>
+        <div id="talkLog"></div>
+        <textarea id="talkInput" placeholder="懒得打字就点上面的「AI 拟话术」直接说。也可自己写一句——许诺、画饼、施恩、离间、表孝、敲打,因人而异。这场密会会影响你本回合行事的后果。"></textarea>
+        <div class="row"><button class="ghost" id="talkSend">进言</button></div>
+      </div>
+
+      <div class="rule" style="margin:14px 0"></div>
+      <div style="font-size:14px;color:#5a4a2c;letter-spacing:.08em">本回合,你决意如何行事?</div>
+      <div id="plots"></div>
+      <textarea id="action" placeholder="用自己的话写下这一步:可上密折、结交大臣、装病、举荐、构陷、施恩百姓、按兵不动…&#10;切记:在康熙眼皮底下,锋芒太露反而催命。"></textarea>
+      <div class="row">
+        <button class="act" id="doBtn">行 事</button>
+        <button class="ghost" id="restBtn">蛰伏一年(不作为)</button>
+        <button class="ghost" id="plotBtn">换三策</button>
+      </div>
+      <div class="err" id="gameErr"></div>
+    </div>
+
+    <div class="log">
+      <details>
+        <summary>史册 · 已发生之事</summary>
+        <ul id="chronicle"></ul>
+      </details>
+    </div>
+  </div>
+
+  <!-- ============ ENDING ============ -->
+  <div id="ending" class="panel ending hidden">
+    <h2 id="endTitle"></h2>
+    <div class="verdict" id="endVerdict"></div>
+    <div id="endRewrite" style="text-align:center;color:var(--zhu);font-size:14px;letter-spacing:.2em;margin:6px 0"></div>
+    <div class="narr" id="endNarr"></div>
+    <div class="row" style="justify-content:center;gap:10px;margin-top:14px">
+      <button class="ghost" id="reviewBtn">查看复盘</button>
+      <button class="ghost" id="histBtn">揭秘真实历史 · 含剧透</button>
+    </div>
+    <div id="endReview" style="display:none"></div>
+    <div id="endHist" style="display:none"></div>
+    <div id="endCodex" style="text-align:center;color:var(--zhu);font-size:13px;letter-spacing:.1em;margin-top:14px"></div>
+    <div id="endAch" style="text-align:center;color:var(--gold);font-size:13px;letter-spacing:.08em;margin-top:6px"></div>
+    <div class="row" style="justify-content:center;gap:10px;margin-top:14px">
+      <button class="act" id="retryBtn">不服?同一皇子再来</button>
+      <button class="act" id="shareBtn">生成分享卡 · 发小红书</button>
+      <button class="ghost" onclick="location.reload()">换个皇子</button>
+    </div>
+    <div id="shareCard">
+      <div class="scard" id="scard"></div>
+      <div class="capbox">
+        <div style="font-size:13px;color:#5a4a2c;letter-spacing:.06em;margin-bottom:6px">小红书文案(已按你这局结果生成,可直接复制):</div>
+        <textarea id="capText" readonly></textarea>
+        <div class="row" style="justify-content:flex-end"><button class="ghost" id="copyCap">复制文案</button></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   九子夺嫡模拟器 — AI 原生 · 状态机 + 上下文记忆
+   设计映射崇祯模拟器三层世界推演:
+     状态约束  → 系统提示里钉死历史情景与数值上限
+     意图判断  → 过滤穿越/修仙/掏手机等乱来,折算成猜忌或贻笑
+     状态转换  → LLM 只输出 JSON 的属性增量,引擎做状态机推进
+   核心张力: 圣眷 vs 猜忌。猜忌满 = 圈禁/赐死。不争是争。
+   ============================================================ */
+
+const PRINCES = [
+  {id:"yinreng", name:"皇二子 胤礽", title:"废太子", diff:"★★★★",
+   desc:"名分最正,自幼立为储君,却已两立两废之命。圣眷与猜忌都极高,如坐烈火。",
+   start:{圣眷:70,猜忌:46,朝堂:65,兵权:30,贤名:45,党羽:55,财力:50},
+   persona:"你是康熙嫡子、两度被立的太子,既得过最深的父爱,也最被父皇忌惮。急于复位是死路。"},
+  {id:"yinti1", name:"皇长子 胤禔", title:"直郡王", diff:"★★★★★",
+   desc:"庶长子,武人性子,惠妃之子、明珠外甥。借废太子之机急进,易铸大错。",
+   start:{圣眷:40,猜忌:50,朝堂:40,兵权:55,贤名:25,党羽:40,财力:40},
+   persona:"你是皇长子,勇而少谋,与太子积怨极深。最忌冲动——历史上你因魇镇太子被永远圈禁。"},
+  {id:"yinzhi", name:"皇三子 胤祉", title:"诚亲王", diff:"★★★",
+   desc:"文人皇子,主修《古今图书集成》,不结大党。难登基,易善终。",
+   start:{圣眷:55,猜忌:30,朝堂:45,兵权:15,贤名:60,党羽:35,财力:45},
+   persona:"你是好文之皇子,以编书才学得宠。避开夺嫡漩涡或可保全,卷入则文人无兵难自保。"},
+  {id:"yinzhen", name:"皇四子 胤禛", title:"雍亲王", diff:"★★",
+   desc:"冷面孤臣,喜怒不形于色。暗有十三弟、年羹尧、隆科多三条线。不争是争,正是天命路线。",
+   start:{圣眷:55,猜忌:25,朝堂:45,兵权:35,贤名:40,党羽:50,财力:55},
+   persona:"你是看似无心大位的孤臣。表忠孝、办实差、不结显党、暗蓄死士,方能后来居上。锋芒毕露即败。"},
+  {id:"yinsi", name:"皇八子 胤禩", title:"廉亲王",diff:"★★★★",
+   desc:"八贤王,朝堂、党羽、贤名三高,门客遍野。正因太得人心而招康熙至忌——越努力越死。",
+   start:{圣眷:30,猜忌:58,朝堂:75,兵权:30,贤名:75,党羽:75,财力:60},
+   persona:"你是众望所归的八贤王。但康熙最忌结党市恩之人。你的强项就是你的催命符——毙鹰事件后父子恩绝。"},
+  {id:"yintang", name:"皇九子 胤禟", title:"贝子",diff:"★★★★",
+   desc:"八爷党钱袋子,财力最厚,通西洋、造火器。自身名分弱,多为辅佐。",
+   start:{圣眷:30,猜忌:46,朝堂:50,兵权:25,贤名:40,党羽:60,财力:80},
+   persona:"你富而善养士,是八爷党的银库。自立无名分,押注他人则一损俱损。雍正登基后你险被改名'塞思黑'。"},
+  {id:"yine", name:"皇十子 胤䄉", title:"敦郡王",diff:"★★★★",
+   desc:"出身贵重(母温僖贵妃、外祖遏必隆),性莽,八爷党铁杆。",
+   start:{圣眷:35,猜忌:44,朝堂:45,兵权:35,贤名:30,党羽:50,财力:55},
+   persona:"你贵而粗豪,死保八哥。莽撞易授人以柄,需借出身自保而非逞强。"},
+  {id:"yinxiang", name:"皇十三子 胤祥", title:"怡亲王",diff:"★★★",
+   desc:"拼命十三郎,性情中人,四哥死党,曾被圈禁。辅佐四哥可得铁帽子王,自立则难。",
+   start:{圣眷:45,猜忌:40,朝堂:40,兵权:50,贤名:55,党羽:45,财力:40},
+   persona:"你侠气重情,武略过人,与四哥生死之交。押对四哥,你是大清唯一的铁帽子怡亲王;自立则名兵两薄。"},
+  {id:"yinti14", name:"皇十四子 胤禵", title:"抚远大将军王",diff:"★★★",
+   desc:"兵权最强,封大将军王出征西北。可惜人在数千里外,鞭长莫及是死穴,又被疑八爷党。",
+   start:{圣眷:55,猜忌:40,朝堂:50,兵权:80,贤名:55,党羽:55,财力:50},
+   persona:"你手握西北重兵、威名赫赫,却远离京城权力中枢。康熙大行之夜你若不在畅春园,兵再多也争不过宣诏之人。"}
+];
+
+// 每位皇子的"通关心法"(工作流九皇子专精agent产出,均过史实核查)
+const HINTS={
+  yinreng:"熬,别再急——压住猜忌、散了旧党,熬回父心",
+  yinti1:"手握军功别张口,杀弟咒储全盘输",
+  yinzhi:"编书博圣眷养贤名,绝不沾党争锋芒",
+  yinzhen:"藏锋装闲人,实差换圣眷;猜忌压到底,终局站御前",
+  yinsi:"人人都说你好,那便是死局——把贤名亲手按进土里",
+  yintang:"你自己没有龙椅可坐,押对要扶的兄长才有命活",
+  yine:"生母贵戚是免死铁券——保八哥,但别莽出新把柄",
+  yinxiang:"不争那把椅子,争成离它最近的人",
+  yinti14:"兵再多,人不在畅春园那一夜也是空的——设法回京"
+};
+
+// 各皇子的真实历史结局(史实揭秘用,均经史实核查;默认不显示,点按钮才看,避免剧透)
+const HIST={
+  yinreng:"太子胤礽:两立两废,二废后禁锢咸安宫,再未复立,雍正二年(1724)病逝。",
+  yinti1:"大阿哥胤禔:因魇镇巫蛊咒太子事发,革爵幽禁高墙,雍正十二年(1734)死于幽所——九子中最早出局者。",
+  yinzhi:"三阿哥胤祉:远离党争,雍正初尚得保全;雍正八年因怡亲王丧礼上失仪被夺爵,圈禁景山,雍正十年卒于禁所。",
+  yinzhen:"四阿哥胤禛:康熙崩于畅春园之夜,隆科多宣遗诏继位,是为雍正帝——这一局,你走的正是真实的历史。",
+  yinsi:"八阿哥胤禩:八贤王人望反招康熙至忌,毙鹰事件后父子恩绝;雍正四年被削宗籍、改名'阿其那',幽禁而死。",
+  yintang:"九阿哥胤禟:八爷党的钱袋子,雍正四年被削宗籍、改名'塞思黑',幽禁保定,折磨而死。",
+  yine:"十阿哥胤䄉:党附八阿哥,雍正二年抗旨获罪、革爵圈禁;因贵戚出身得以保命,乾隆朝获释,乾隆六年病卒。",
+  yinxiang:"十三阿哥胤祥:雍正即位即封怡亲王、总理户部,世袭罔替,成清代仅有的恩封铁帽子王;雍正八年病逝,君臣相得始终——你这局走的正是历史。",
+  yinti14:"十四阿哥胤禵:抚远大将军王远征西北,康熙大行时远在数千里外,无从介入;雍正召回,先守景陵后遭圈禁,乾隆朝方获释。"
+};
+
+const STAT_KEYS=["圣眷","猜忌","朝堂","兵权","贤名","党羽","财力"];
+const STAT_DESC={圣眷:"康熙的宠信",猜忌:"康熙的疑心",朝堂:"百官支持",兵权:"军事实力",贤名:"士林民望",党羽:"核心党羽",财力:"可动用之银"};
+
+// 持久关系系统(养成核心):终局真正定胜负的三个人,靠多年密会经营
+const RELATION_KEYS=["隆科多","年羹尧","佟国维"];
+const RELATION_DESC={隆科多:"掌九门·终局宣遗诏之人",年羹尧:"川陕总督·扼西北粮道",佟国维:"上书房·左右朝议风向"};
+function startRelations(id){
+  const r={隆科多:30,年羹尧:30,佟国维:35};
+  if(id==="yinzhen"){r.年羹尧+=15;r.隆科多+=10;}   // 老四的真实班底
+  if(id==="yinsi"){r.佟国维+=15;}                  // 八爷得举朝之望
+  if(id==="yinti14"){r.年羹尧-=10;}                // 年是老四的人,掣肘十四
+  return r;
+}
+// 各年真实史情锚点,喂给要务生成,使事件扎根历史而非架空
+function histAnchor(y){
+  if(y<=1703) return "索额图以结党下狱幽死,太子失其奥援。";
+  if(y<=1707) return "康熙屡次南巡、督理河工(靳辅、张鹏翮),江南科场与吏治为朝野所瞩。";
+  if(y<=1709) return "一废、复立太子前后,诸子争储之心初显,康熙清算露相之人。";
+  if(y<=1711) return "户部亏空难清,噶礼与张伯行互参案沸沸扬扬,托合齐会饮案牵连太子党。";
+  if(y<=1713) return "康熙六旬万寿、首开千叟宴,大赉天下;表面盛世下储位暗涌。";
+  if(y<=1717) return "准噶尔策妄阿拉布坦屡犯西北,边事日紧,朝议遣将筹饷。";
+  if(y<=1721) return "西北用兵、大军进藏,台湾朱一贵之乱又起,国用浩繁。";
+  return "康熙圣躬日衰,储位悬而未决,人心浮动。";
+}
+
+// 时代主线事件:到点必发,AI 据你的处境演绎。平年玩家自由行事。
+const TIMELINE=[
+  {year:1703, key:"索额图之死", brief:"康熙以'议论国事、结党妄行'拘禁太子第一奥援、大学士索额图,致其幽死,更斥为'本朝第一罪人'。太子失其右臂,诸子嗅到储位松动的第一缕血腥。"},
+  {year:1708, key:"一废太子", brief:"塞外木兰,康熙以太子'暴戾不仁、窥伺帐殿'为由,当众垂泪废黜胤礽,囚于咸安宫。储位空悬,诸子心动。"},
+  {year:1709, key:"复立太子", brief:"康熙称废太子乃'为魇魅所害',复立胤礽为皇太子,并惩处此前争储露相之人。试探与清算并行。"},
+  {year:1712, key:"二废太子", brief:"太子结党、急不可待之状再现,康熙第二次废黜胤礽,并下旨此后再不立太子。储位真空,夺嫡进入终局。"},
+  {year:1714, key:"毙鹰事件", brief:"康熙巡幸途中,有皇子进献的海东青竟奄奄一息如将毙。康熙大怒,斥为诅咒,当众言及'父子之恩或将绝'。结党市恩者人人自危。"},
+  {year:1718, key:"大将军王", brief:"准噶尔策妄阿拉布坦犯藏,康熙择一皇子封抚远大将军王,授王旗西征。掌兵者威望大涨,却也远离京畿。"},
+  {year:1722, key:"畅春园之夜", brief:"康熙六十一年十一月十三,寒夜。畅春园灯火惨白,圣躬弥留,御医屏息进出。九门紧闭,钥匙在隆科多腰间;传位之口,也在他舌上。诸子或被宣召入园、或被挡在宫门之外——谁守在御榻前、谁能让隆科多开口,这一夜便定了天下。机会只此一次,落子无悔。"}
+];
+
+// 平年情景库(工作流产出18条,压力标签与七维属性对齐,AI 据当前皇子与局势改写)
+const PLAINS=[
+  "黄河某段堤防年久失修,工部题请大修,所需河银巨万。康熙有意点一位皇子总理河务。这是露脸的肥差,也是稍有亏空便万劫不复的烫手山芋——接,还是举荐他人?",
+  "直隶数县春旱、流民塞道。康熙命诸子各抒赈济之策。你是奏请开内帑大赈以邀民望,还是循例蠲免、稳妥不出头?银子怎么出、功劳归谁,都在天平上。",
+  "户部历年亏空积重,康熙震怒,命彻查追比欠款。被点去清缴,得罪的是满朝借银的同僚与王公;推脱不办,又显你无能怕事。这一刀砍下去,砍的是人心。",
+  "几位科道言官与翰林私下递帖,愿奉你为主、为你张目立论。门下渐有清流之望。可结纳士林一旦坐实,便是'市恩树党'。是欣然纳交,还是婉拒避嫌?",
+  "太子党中有人持太子手谕来访,许以日后辅政之位,要你在某桩部议上替东宫说话。靠向名分最正者似是捷径,可太子两立两废、圣心已疑,押他是从龙还是连坐?",
+  "八阿哥广结善缘、贤名播于朝野,遣人以厚礼相邀,欲与你联手抗衡东宫。八爷党势大固可借力,然康熙最忌结党市恩,沾上这条线,福祸只在一念。",
+  "康熙近日召你入畅春园闲叙,看似家常,实则考校:问你读何书、办差心得、对某省督抚之评。每一句应对都在称量你的城府与野心。藏拙,还是显才?",
+  "一名言官上疏弹劾你门下属官贪纵不法,矛头隐隐指向你治家不严。你是上疏自请议处、壮士断腕,还是动用人脉压下此案?认错伤体面,遮掩招大祸。",
+  "西北用兵在即,军需粮饷转运吃紧。康熙问可有皇子愿督办后勤。这差事不掌兵却近兵权,办好了军中有了你的人,办砸了便是误国之罪压顶。",
+  "某致仕老臣门生故吏遍天下,其孙登门求你为一桩世袭恩荫疏通。卖这个人情,便接上了一张盘根错节的关系网;不应,则失一门旧族之心。",
+  "年节将至,诸皇子争相进献奇珍以邀圣眷。你是随众献上重礼显孝心,还是反其道进一卷亲笔抄经、一篇治河条陈,以朴素务实博康熙另眼?",
+  "内务府一桩采办弊案牵连到你府中长史,御史正在风闻。你若先发制人交出此人,可保自身却寒了党羽之心;若回护到底,万一案发便是同罪。",
+  "康熙命你会同某位兄弟同审一桩刑部疑狱。同僚是你暗中较劲的对手,你是借机显能压他一头,还是和光同尘、共担共退?争则结怨,让则失分。",
+  "地方督抚遣人密送一份厚仪'孝敬',附呈本省钱粮虚实。收下便有了外省的财源与耳目,也留下了把柄;退回则断了一条经营封疆的暗线。",
+  "宗室一位贝勒因醉后失言、议论储位被参,牵涉与你的往来书信。康熙留中未发,似在观望。你是上疏撇清、与之割席,还是念旧情代为缓颊?",
+  "京畿大疫,药石短缺、人心惶惶。康熙未明令,但圣意盼有皇子主动请缨设局施药。你是抢先奏请、收民心于危难,还是惧担防疫不力之责而按兵不动?",
+  "翰林院修书一事久拖,康熙属意一位皇子领衔总裁。这是个清贵不沾兵财、专养文名的差事,办好了士林归心,却也最易被讥为'以虚名邀宠、不堪实务'。",
+  "一位手握实缺的武将私下投帖输诚,愿为你效死。接纳便是兵权进账,可皇子私交边将乃康熙大忌,一旦风声入御前,圣眷瞬间化为猜忌。"
+];
+
+// 精简到 10 回合(6 主线 + 4 平年),从一废太子的高潮直接开打,不再冗长。
+const TURN_PLAN=[
+  {y:1708,t:"main"},{y:1709,t:"main"},{y:1710,t:"plain"},{y:1712,t:"main"},{y:1713,t:"plain"},
+  {y:1714,t:"main"},{y:1716,t:"plain"},{y:1718,t:"main"},{y:1720,t:"plain"},{y:1722,t:"main"}
+];
+const START_YEAR = TURN_PLAN[0].y; // 1708
+function buildQueue(){
+  const byYear={}; TIMELINE.forEach(e=>byYear[e.year]=e);
+  return TURN_PLAN.map(s=> s.t==="main"
+    ? {type:"main",year:s.y,key:byYear[s.y].key,brief:byYear[s.y].brief}
+    : {type:"plain",year:s.y,key:null,brief:null});
+}
+
+// 结局工厂:状态机判定胜负,AI 只写文(prompt)。
+const ENDINGS={
+  圈禁:(v)=>({key:"圈禁",title:"圈 禁 终 身",verdict:v||"猜忌满盈,父疑既深,囚于高墙,终老不出。",
+    prompt:"你以结党谋储、心怀叵测之名被永远圈禁。写一段苍凉的史官结语。"}),
+  登基:()=>({key:"登基",title:"承 继 大 统",verdict:"潜龙在渊,一朝飞天。畅春园一夜,乾坤底定。",
+    prompt:`你('${S.prince.name}')最终继承大统。结合你这一路的处境,写你如何后来居上、御前定鼎的登基结语;若你本是八爷党、大将军王或废太子,则写你如何逆着自己的死穴险胜。`}),
+  铁帽子:()=>({key:"铁帽子",title:"铁 帽 子 王",verdict:"押对了人,从龙之功,世袭罔替。",
+    prompt:"你辅佐四哥登极,获封世袭罔替的怡亲王,成为大清开国后唯一异数。写一段君臣相得、生死不负的结语。"}),
+  从龙:()=>({key:"从龙",title:"从 龙 之 臣",verdict:"你押的人赢了,你也鸡犬升天。",
+    prompt:"你拥立的兄长登基,你以从龙之功封王得势。写一段如释重负又暗藏隐忧的结语。"}),
+  善终:()=>({key:"善终",title:"富 贵 闲 人",verdict:"未得大位,亦未罹祸。守拙保身,得以善终。",
+    prompt:"你没能登极,但避开了清算,以亲王之尊富贵终老。写一段克制通透、关于在权力漩涡里活下来本身就是赢的结语。"}),
+  塞思黑:()=>({key:"塞思黑",title:"阿其那 · 塞思黑",verdict:"新君即位,旧党清算。削宗籍,改恶名,幽囚而殁。",
+    prompt:"雍正登基后清算八爷党,将你削去宗籍、改满语恶名(阿其那/塞思黑),幽禁折磨而死。写一段冷酷的史官结语。"}),
+  夺爵:(v)=>({key:"夺爵",title:"夺 爵 幽 禁",verdict:v||"圣心已弃,新君难容。褫夺封爵,郁郁而终。",
+    prompt:"你在夺嫡中失势,新君即位后被夺爵幽禁,郁郁而终。写一段失意者的史官结语。"})
+};
+
+// ---------- 运行态 ----------
+let S=null; // {prince, stats, flags:Set, 记忆:[], queue, qi, year, plainCount, talk:{target,history}}
+let cfg={};
+
+// ---------- 选皇子 ----------
+const princesEl=document.getElementById("princes");
+let selectedPrince=null;
+PRINCES.forEach(p=>{
+  const d=document.createElement("div");
+  d.className="pcard";
+  d.innerHTML=`<div class="di">${p.diff}</div>
+    <div class="nm">${p.name}<span class="ti">${p.title}</span></div>
+    <div class="ds">${p.desc}</div>
+    <div class="st">圣眷${p.start.圣眷} · 猜忌${p.start.猜忌} · 朝堂${p.start.朝堂} · 兵权${p.start.兵权} · 党羽${p.start.党羽}</div>
+    <div class="xf">心法 · ${HINTS[p.id]||""}</div>`;
+  d.onclick=()=>{document.querySelectorAll(".pcard").forEach(x=>x.classList.remove("sel"));
+    d.classList.add("sel");selectedPrince=p;checkReady();};
+  princesEl.appendChild(d);
+});
+
+// ---------- provider 预设 ----------
+const PRESETS={
+  deepseek:{url:"https://api.deepseek.com/v1",model:"deepseek-chat"},
+  qwen:{url:"https://dashscope.aliyuncs.com/compatible-mode/v1",model:"qwen-plus"},
+  openai:{url:"https://api.openai.com/v1",model:"gpt-4o-mini"},
+  custom:{url:"",model:""}
+};
+document.getElementById("provider").onchange=e=>{
+  const p=PRESETS[e.target.value];
+  document.getElementById("baseurl").value=p.url;
+  document.getElementById("model").value=p.model;
+};
+// 记住上次 key
+try{const k=localStorage.getItem("jzdd_key");if(k)document.getElementById("apikey").value=k;}catch(e){}
+
+function checkReady(){
+  const key=document.getElementById("apikey").value.trim();
+  document.getElementById("startBtn").disabled=!(selectedPrince&&key);
+}
+document.getElementById("apikey").oninput=checkReady;
+
+// ---------- LLM 调用 ----------
+async function callLLM(messages,{json=false,temp=0.8}={}){
+  const body={model:cfg.model,messages,temperature:temp};
+  if(json) body.response_format={type:"json_object"};
+  const r=await fetch(cfg.url.replace(/\/$/,"")+"/chat/completions",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","Authorization":"Bearer "+cfg.key},
+    body:JSON.stringify(body)
+  });
+  if(!r.ok){const t=await r.text();throw new Error("接口报错 "+r.status+": "+t.slice(0,200));}
+  const d=await r.json();
+  return d.choices[0].message.content;
+}
+function parseJSON(txt){
+  try{return JSON.parse(txt);}catch(e){}
+  const m=txt.match(/\{[\s\S]*\}/);
+  if(m){try{return JSON.parse(m[0]);}catch(e){}}
+  throw new Error("推演返回非法:"+txt.slice(0,160));
+}
+
+// ---------- 世界设定(状态约束层) ----------
+const RANK={yinti1:1,yinreng:2,yinzhi:3,yinzhen:4,yinsi:8,yintang:9,yine:10,yinxiang:13,yinti14:14};
+function worldBrief(){
+  const p=S.prince;
+  const stats=STAT_KEYS.map(k=>`${k}:${S.stats[k]}`).join(" ");
+  const mem=S.记忆.slice(-14).map((m,i)=>`· ${m}`).join("\n")||"(尚无)";
+  const flags=[...S.flags].join("、")||"无";
+  return `【时代】清·康熙朝晚期,九子夺嫡。康熙多疑、重孝悌、最恨皇子结党市恩、急于谋储。储位空悬。
+【架空声明·最要紧】本局是架空推演,储位真正空悬,以你('${p.name}')为唯一主角。最终谁登基只由本局数值与你的行动决定,绝不可假定真实历史的结果(四阿哥胤禛/雍正继位)必然发生。四阿哥在本局只是与你并列的对手之一,会随本局态势起落、未必会赢。叙述诸子与朝局时一律按本局当下局势,不得剧透或暗示历史上的最终赢家。
+【你扮演】${p.name}(${p.title})。设定:${p.persona}
+【序齿】诸子序齿:大阿哥(1)、太子胤礽(2)、三阿哥(3)、四阿哥(4)、八阿哥(8)、九阿哥(9)、十阿哥(10)、十三阿哥(13)、十四阿哥(14)。你序齿第${RANK[p.id]}。提及他人务必按与你的长幼:序齿小于你的称弟,大于你的称兄,绝不可弄错(如你扮太子,八阿哥是弟非兄)。
+【当前年份】${S.year}年
+【你的处境数值(0-100)】${stats}
+  其中"猜忌"是康熙对你的疑心,越高越凶;满100即圈禁或赐死。"圣眷"是宠信。二者此消彼长是夺嫡命门。
+【关键人物向背(0-100,靠密会经营,终局有决定性)】隆科多${S.relations.隆科多}(掌九门·宣遗诏) 年羹尧${S.relations.年羹尧}(扼西北粮道) 佟国维${S.relations.佟国维}(左右朝议)
+【已贴的标记】${flags}
+【近来史册记忆】\n${mem}`;
+}
+
+// ---------- 史官推演(意图判断 + 状态转换层) ----------
+async function simulate(action,sceneTitle){
+  const sys=`你是这盘九子夺嫡模拟器的"天命推演"史官引擎,职责是把玩家这一步行动,折算成对一位皇子处境的真实后果。严格遵守三条:
+一·状态约束:一切须合康熙朝史情与人物逻辑。康熙英察多疑,皇子越急于露出夺嫡之心、越结党市恩,猜忌涨得越快;务实办差、表纯孝、不显山露水者,圣眷稳而猜忌降。兵权、财力、党羽不会凭空暴涨。
+二·意图判断:若玩家行动荒诞越界(穿越、修仙、掏手机、造原子弹、当众宣称要当皇帝、行刺康熙等),不直接满足他,但要用好笑、有戏剧张力、值得截图的方式演绎其荒诞后果——像崇祯模拟器那样冷峻又好笑,让他自食其果(贻笑大方、被当众斥为疯癫、猜忌暴涨乃至下狱)。叙事里把这份荒诞和反差写足、写出梗,而不是干巴巴扣分。
+三·状态转换:只对发生变化的数值给出增量(可正可负)。幅度一般 3~12(回合不多,该涨的别吝啬),重大事件至多约 16。尤其"猜忌":除非结党坐实、谋逆、毙鹰这类重罪,单回合涨幅不超过 8;凡蛰伏、办实差、表纯孝、不显山露水的回合,"猜忌"应缓降(-3 ~ -8)。猜忌会被时间与安分抚平,切勿一味往上堆。不要列没变化的。
+
+推演范例(每个收益都绑一个反噬,学这种冷峻的双刃口吻):
+- 「连续称病避差、从不上折辩白」→ 康熙叹其无争心有纯孝,圣眷大涨、猜忌降;但久离权枢,根基日浅。
+- 「大办寿宴遍邀朝臣」→ 被密报交通外朝、结党自重,猜忌大涨、圣眷跌,中立朝臣反而疏远你。
+- 「主动追比户部欠款」→ 办差得力圣眷小涨,却结怨满朝得'冷面王'之名,朝堂大跌,康熙疑你刻深寡恩。
+- 「联名保奏八阿哥」→ 正撞康熙'举朝保八'之大忌,你与八阿哥同被钉为结党,圣眷大跌、猜忌大涨。
+- 「昼夜侍疾御前」→ 纯孝入帝心圣眷大涨;但被他党参'借侍疾窥伺圣躬',康熙温情之外亦生一丝微忌。
+
+仅输出 JSON,字段:
+{
+ "叙事":"80~150字,史官口吻,文白相间,简洁有力地写清此举的连锁反应;遇玩家整活则把荒诞与反差写足,有梗、有画面、值得截图",
+ "康熙之心":"一句康熙此刻的内心独白(朱批口吻,要狠、要诛心,像能被单独截图转发的金句)",
+ "属性变化":{"猜忌":12,"圣眷":-6},
+ "新增标记":["可空。只能从这套标准词里挑:纯孝之名、结党坐实、毙鹰嫌疑、魇镇暴露、回京、御前宣诏、掌九门、辅佐四哥、八爷登基"],
+ "定性":"得势 | 失分 | 凶险 | 平稳 中择一",
+ "危机预告":"一句下一步的隐患或机会",
+ "诸子动向":"一句话,诸子或朝臣对你这一步的即时反应(谁警觉了、谁趁机进谗、谁来示好)"
+}`;
+  const talkCtx=(S.talk.history&&S.talk.history.length)
+    ? `\n【你本回合已做的密会往来(须反映到结果里:拉拢是否成、试探出什么、有无被反将)】\n`+S.talk.history.map(h=>`${h.who}：${h.text}`).join("\n")+"\n"
+    : "";
+  const climax=(S.scene&&S.scene.key==="畅春园之夜")?`\n【终局·康熙咽气的最后一夜】把这一夜写得惊心动魄、生死一线:御医屏息进出、隆科多握着九门钥匙与传位之权、诸子在御前与宫门外以刻计地暗中角力。这是夺嫡的最后一搏,后果将直接决定你登基还是出局,务必写足紧张与决定性,朱批要像遗诏将出前的雷霆。`:"";
+  const affCtx=(S.affairsDone&&Object.keys(S.affairsDone).length)
+    ? `\n【你本年已处置的要务(行事须与之连贯)】\n`+Object.keys(S.affairsDone).map(i=>`${(S.affairs[i]||{}).标题||""}:${S.affairsDone[i].词||""}`).join("\n")+"\n"
+    : "";
+  const usr=`${worldBrief()}\n\n【本回合情景】${sceneTitle}${talkCtx}${affCtx}${climax}\n【玩家这一步的行动原话】「${action}」\n\n请推演后果,只回 JSON。`;
+  const out=await callLLM([{role:"system",content:sys},{role:"user",content:usr}],{json:true,temp:0.85});
+  return parseJSON(out);
+}
+
+// ---------- 朝局简报(回合开始,看康熙/诸子/朝臣的动态) ----------
+async function courtBriefing(){
+  const sys=`你是九子夺嫡的"朝局"叙事官,据当前局势用第三人称简报本年天下动态,贴合康熙朝史情与各皇子、各重臣真实处境,鲜活具体、点名点姓、不空泛。只回 JSON:
+{
+ "圣心":"康熙近况与心思一两句:健康、近来在意何事、对诸子的态度倾向",
+ "诸子":[{"皇子":"封号简称如八阿哥/废太子/十四阿哥","动向":"他这一年在做的一桩具体事"}],
+ "朝臣":[{"臣":"具体人名如佟国维/马齐/张廷玉/隆科多","动向":"他在向谁靠拢、办什么、说什么,一句"}],
+ "门人":"各党门客与你门下幕僚的暗流一句:谁在替谁奔走、谁在观望、谁起了二心"
+}
+诸子给2-3位最活跃的对手,朝臣给1-2位关键大臣,都不要列玩家自己。`;
+  const talkCtx=(S.talk.history&&S.talk.history.length)?`\n【刚发生的密会(动态须有所反映)】\n`+S.talk.history.map(h=>`${h.who}：${h.text}`).join("\n"):"";
+  const usr=`${worldBrief()}\n\n【本年情景】${S.scene.title} — ${S.scene.brief}${talkCtx}\n简报本年朝局。`;
+  const out=await callLLM([{role:"system",content:sys},{role:"user",content:usr}],{json:true,temp:0.92});
+  return parseJSON(out);
+}
+// 回合开始:朝局动态 + 本年2-3桩要务(每桩自带应对选项与预算好的后果),一次调用拿全
+async function turnIntel(){
+  const sys=`你是九子夺嫡的"朝局"叙事官。据当前局势与本年真实史情,给出本年天下动态,以及同时摊到这位皇子面前的2-3桩要务(让每一年都有好几件事要应付)。要务须扎根本年真实史情(用户消息给出),围绕真实的差事、案件、人物展开,不要架空穿越。称谓按与玩家的长幼,勿弄错兄弟。只回 JSON:
+{
+ "圣心":"康熙近况与心思一两句",
+ "诸子":[{"皇子":"封号简称","动向":"他这一年在做的一桩具体事"}],
+ "朝臣":[{"臣":"具体人名如佟国维/马齐/隆科多","动向":"一句"}],
+ "门人":"各党门客与你门下幕僚的暗流一句",
+ "要务":[
+   {"标题":"四到八字事由","详情":"25~45字,本年真实史情下要你拿主意的一桩具体事,简洁","选项":[
+     {"词":"一句应对(20字内)","结果":"一句此应对引出的后果","变化":{"猜忌":4,"圣眷":-2},"关系":{"隆科多":5},"标记":[]}
+   ]}
+ ]
+}
+要务2-3桩各不雷同,每桩2-3个选项。选项"变化"幅度小(每项±2~8,猜忌涨幅≤8);"关系"为可选,表示对隆科多/年羹尧/佟国维的好感变动(±3~10),凡涉及这三人的差事就该带上;"标记"只能从这套词里挑或留空:纯孝之名、结党坐实、毙鹰嫌疑、回京、御前宣诏、辅佐四哥、八爷登基。诸子给2-3位最活跃对手,朝臣给1-2位,都不列玩家自己。`;
+  const usr=`${worldBrief()}\n\n【本年情景】${S.scene.title} — ${S.scene.brief}\n【本年真实史情(要务须扎根于此)】${histAnchor(S.year)}\n给本年朝局与2-3桩要务。`;
+  const out=await callLLM([{role:"system",content:sys},{role:"user",content:usr}],{json:true,temp:0.92});
+  return parseJSON(out);
+}
+function renderCourtPanel(j){
+  const body=document.getElementById("courtBody");
+  let html="";
+  if(j.圣心) html+=`<div class="cline kx"><span class="tag">圣心</span><span>${escapeHtml(j.圣心)}</span></div>`;
+  (j.诸子||[]).slice(0,3).forEach(z=> html+=`<div class="cline"><span class="tag">${escapeHtml(z.皇子||"诸子")}</span><span>${escapeHtml(z.动向||"")}</span></div>`);
+  (j.朝臣||[]).slice(0,2).forEach(z=> html+=`<div class="cline"><span class="tag">${escapeHtml(z.臣||"朝臣")}</span><span>${escapeHtml(z.动向||"")}</span></div>`);
+  if(j.门人) html+=`<div class="cline"><span class="tag">门人</span><span>${escapeHtml(j.门人)}</span></div>`;
+  body.innerHTML=html||'<span class="cmini">朝中暂无大动静。</span>';
+}
+function renderPlots(list){
+  const box=document.getElementById("plots");if(!box)return;box.innerHTML="";
+  (list||[]).slice(0,3).forEach(c=>{
+    const d=document.createElement("button");d.className="plot-chip";
+    d.innerHTML=`<b>${escapeHtml(c.名||"计")}</b>${escapeHtml(c.行||"")}`;
+    d.onclick=()=>{document.getElementById("action").value=c.行||"";};
+    box.appendChild(d);
+  });
+}
+async function loadTurn(){
+  document.getElementById("courtPanel").style.display="block";
+  document.getElementById("courtBody").innerHTML='<span class="cmini"><span class="spin"></span> 探听朝局…</span>';
+  document.getElementById("affairs").innerHTML='<span class="cmini"><span class="spin"></span> 本年诸事纷至…</span>';
+  try{
+    const j=await turnIntel();
+    renderCourtPanel(j);
+    renderAffairs(j.要务);
+  }catch(e){ document.getElementById("courtBody").innerHTML='<span class="cmini">朝局难测(接口未应)。</span>'; document.getElementById("affairs").innerHTML='<span class="cmini">本年要务难测(接口未应)。</span>'; }
+}
+async function refreshCourt(){ try{ renderCourtPanel(await courtBriefing()); }catch(e){} }
+
+// 本年要务:每桩当场点选、即时结算(后果由 turnIntel 预先算好,不再额外调用)
+function renderAffairs(list){
+  S.affairs=Array.isArray(list)?list:[]; S.affairsDone={};
+  const box=document.getElementById("affairs");box.innerHTML="";
+  if(!S.affairs.length){ box.innerHTML='<span class="cmini">本年朝中平静,无大事相扰。</span>'; return; }
+  S.affairs.forEach((ev,idx)=>{
+    const card=document.createElement("div");card.className="affair";
+    let opts="";
+    (ev.选项||[]).forEach((o,oi)=>{ opts+=`<button class="aff-opt" data-i="${idx}" data-o="${oi}">${escapeHtml(o.词||"")}</button>`; });
+    card.innerHTML=`<div class="aff-t">${escapeHtml(ev.标题||"要务")}</div><div class="aff-d">${escapeHtml(ev.详情||"")}</div><div class="aff-opts">${opts}</div><div class="aff-r"></div>`;
+    box.appendChild(card);
+  });
+  box.querySelectorAll(".aff-opt").forEach(b=> b.onclick=()=>resolveAffair(+b.dataset.i,+b.dataset.o,b));
+}
+function resolveAffair(i,o,btn){
+  if(S.affairsDone[i]) return;
+  const ev=S.affairs[i]; if(!ev) return;
+  const opt=(ev.选项||[])[o]; if(!opt) return;
+  S.affairsDone[i]=opt;
+  if(opt.变化){for(const k in opt.变化){if(STAT_KEYS.includes(k)){
+    let dlt=Number(opt.变化[k]||0); if(k==="猜忌"&&dlt>8)dlt=8;
+    S.stats[k]=Math.max(0,Math.min(100,(S.stats[k]||0)+dlt));}}}
+  if(Array.isArray(opt.标记)) opt.标记.forEach(t=>t&&S.flags.add(t));
+  if(opt.关系){for(const k in opt.关系){if(RELATION_KEYS.includes(k)){
+    S.relations[k]=Math.max(0,Math.min(100,(S.relations[k]||0)+Number(opt.关系[k]||0)));}}}
+  renderHUD();
+  const card=btn.closest(".affair");
+  card.querySelectorAll(".aff-opt").forEach(x=>{x.disabled=true; if(x===btn)x.classList.add("chosen");});
+  card.querySelector(".aff-r").textContent=opt.结果||"";
+  pushChronicle("〔要务〕"+(ev.标题||"")+"·"+(opt.词||""));
+}
+
+// ---------- 角色扮演(密会) ----------
+function talkPersona(target){
+  const map={
+    "康熙":"你扮演康熙皇帝本人,英明多疑、重孝悌、城府极深。对来奏对的皇子表面温和,暗中处处考校其有无夺嫡之心与结党之实。说话用帝王口吻,文白相间,绝不直接表态立谁为储。",
+    "八阿哥 胤禩":"你扮演八贤王胤禩,城府深、广结善缘、急于成事却强压不露。对来交结的兄弟既想拉拢入伙,又暗自提防其真心,言语谦和而句句在掂量。",
+    "废太子 胤礽":"你扮演两立两废、惊惧而多疑的废太子胤礽。时而拉拢求援盼东山再起,时而猜忌反复、怨怼父子兄弟,情绪起伏。",
+    "十四阿哥 胤禵":"你扮演手握西北重兵、心高气傲的大将军王胤禵。既倚兵自重、不甘屈居人下,又惦记京中风向与八哥一系的进退,豪气中带着焦灼。",
+    "佟国维(上书房大臣)":"你扮演老成持重的上书房大臣佟国维,圆滑惜身、最会看风向。既不愿得罪有望之皇子,又怕押错站引火烧身,话里全是留有余地。",
+    "隆科多(掌九门)":"你扮演掌步军统领、握九门钥匙的隆科多。谨慎惜身、待价而沽,深知自己在终局一夜中的分量,绝不轻易交底,处处试探对方能给什么。",
+    "年羹尧(川陕·门人)":"你扮演精明强干、心高而跋扈的年羹尧,川陕总督,手握西北军务与粮道。对皇子的招揽既盘算自己前程、又自恃其能,效忠与要价并存,言语干练带锋。"
+  };
+  return (map[target]||map["康熙"])+" 务必留在角色里,不得跳出,不得替玩家拿主意。你有自己的利害与算计,会回应玩家的招揽、试探与周旋但未必上钩。回话80~160字。";
+}
+async function talkReply(target,userText){
+  const sys=talkPersona(target)+` 只回 JSON:{"回话":"你这个角色的原话(80~160字)","动态":"一句第三人称旁白:这番密会引起的细微变化或反应","好感变化":一个 -10 到 10 的整数,表示这次密会后你(此角色)对玩家好感的升降}`;
+  const hist=(S.talk.history||[]).slice(-6).map(h=>`${h.who}:${h.text}`).join("\n");
+  const usr=`${worldBrief()}\n\n你正与${S.prince.name}密会。此前对话:\n${hist||"(刚开始)"}\n\n${S.prince.name}对你说:「${userText}」\n\n以你的身份回话,并给一句动态旁白。只回 JSON。`;
+  const out=await callLLM([{role:"system",content:sys},{role:"user",content:usr}],{json:true,temp:0.9});
+  return parseJSON(out);
+}
+
+// ---------- 终局结算(状态机定胜负,AI 只写文) ----------
+// 每位皇子的通关条件抽成数据:既驱动判定,也驱动结局复盘(让玩家看清差在哪一项)。
+const WIN_RULES={
+  yinti1:(st,f)=>({need:"承继大统",items:[
+    {ok:st.圣眷>=64,t:`圣眷≥64  你 ${st.圣眷}`},
+    {ok:st.猜忌<=52,t:`猜忌≤52  你 ${st.猜忌}`},
+    {ok:st.兵权>=56,t:`兵权≥56  你 ${st.兵权}`},
+    {ok:st.朝堂>=54,t:`朝堂≥54  你 ${st.朝堂}`},
+    {ok:!f.has("魇镇暴露"),t:`未行魇镇巫蛊  ${f.has("魇镇暴露")?"已暴露":"清白"}`}
+  ]}),
+  yinreng:(st,f)=>({need:"复位登基",items:[
+    {ok:st.圣眷>=55,t:`圣眷≥55  你 ${st.圣眷}`},
+    {ok:st.猜忌<=54,t:`猜忌≤54  你 ${st.猜忌}`},
+    {ok:!f.has("结党坐实"),t:`未结党坐实  ${f.has("结党坐实")?"已坐实":"清白"}`}
+  ]}),
+  yinzhi:(st,f)=>({need:"文人天子",items:[
+    {ok:st.圣眷>=66,t:`圣眷≥66  你 ${st.圣眷}`},
+    {ok:st.猜忌<=52,t:`猜忌≤52  你 ${st.猜忌}`},
+    {ok:st.贤名>=60,t:`贤名≥60  你 ${st.贤名}`}
+  ]}),
+  yinzhen:(st,f)=>({need:"承继大统",items:[
+    {ok:st.圣眷>=45,t:`圣眷≥45  你 ${st.圣眷}`},
+    {ok:st.猜忌<=52,t:`猜忌≤52  你 ${st.猜忌}`},
+    {ok:!f.has("结党坐实"),t:`未结党坐实  ${f.has("结党坐实")?"已坐实":"清白"}`},
+    {ok:f.has("纯孝之名")||f.has("御前宣诏")||f.has("掌九门"),t:`纯孝之名 或 终局站御前  ${(f.has("纯孝之名")||f.has("御前宣诏")||f.has("掌九门"))?"具备":"皆无"}`}
+  ]}),
+  yinsi:(st,f)=>({need:"散党逆袭登基",items:[
+    {ok:st.党羽<=52,t:`党羽压到≤52  你 ${st.党羽}`},
+    {ok:st.贤名<=66,t:`贤名压到≤66  你 ${st.贤名}`},
+    {ok:st.猜忌<=54,t:`猜忌≤54  你 ${st.猜忌}`},
+    {ok:st.圣眷>=48,t:`圣眷≥48  你 ${st.圣眷}`}
+  ]}),
+  yintang:(st,f)=>({need:"从龙之功",items:[
+    {ok:f.has("八爷登基"),t:`押定八哥·密会中表态扶保  ${f.has("八爷登基")?"已押":"未押"}`},
+    {ok:st.猜忌<60,t:`猜忌<60 不遭清算  你 ${st.猜忌}`}
+  ]}),
+  yinxiang:(st,f)=>({need:"铁帽子怡亲王",items:[
+    {ok:f.has("辅佐四哥"),t:`押定四哥·密会或行动中表态辅佐  ${f.has("辅佐四哥")?"已押":"未押"}`}
+  ]}),
+  yinti14:(st,f)=>({need:"赶回京继位",items:[
+    {ok:f.has("回京"),t:`畅春园之夜人在京城  ${f.has("回京")?"已回京":"远在西北"}`},
+    {ok:st.兵权>=46,t:`兵权≥46  你 ${st.兵权}`},
+    {ok:st.猜忌<=58,t:`猜忌≤58  你 ${st.猜忌}`},
+    {ok:st.圣眷>=44,t:`圣眷≥44  你 ${st.圣眷}`}
+  ]})
+};
+WIN_RULES.yine=WIN_RULES.yintang;
+function winState(){ const r=WIN_RULES[S.prince.id]; return r?r(S.stats,S.flags):{need:"",items:[]}; }
+
+function computeEnding(){
+  const st=S.stats,p=S.prince.id,f=S.flags;
+  const has=t=>f.has(t);
+  if(st.猜忌>=100) return ENDINGS.圈禁();
+  if(has("魇镇暴露")) return ENDINGS.圈禁("以巫蛊魇镇咒太子(实为其弟),事发,削爵永禁高墙。");
+
+  const r=WIN_RULES[p]?WIN_RULES[p](st,f):{items:[]};
+  const allOk=r.items.length>0 && r.items.every(i=>i.ok);
+  switch(p){
+    case "yinzhen": case "yinzhi": case "yinti1":
+      if(allOk) return ENDINGS.登基();
+      break;
+    case "yinreng":
+      if(allOk) return ENDINGS.登基();
+      if(st.猜忌>=80) return ENDINGS.圈禁("三度失父心,终老咸安宫。");
+      break;
+    case "yinsi":
+      if(allOk) return ENDINGS.登基();
+      if(has("毙鹰嫌疑")||st.猜忌>=78) return ENDINGS.塞思黑();
+      break;
+    case "yinti14":
+      if(allOk) return ENDINGS.登基();
+      if(!has("回京")) return ENDINGS.夺爵("空有重兵,远在西陲,畅春园一夜与你无关。新君收兵权,圈于西山。");
+      break;
+    case "yinxiang":
+      if(allOk) return ENDINGS.铁帽子();
+      break;
+    case "yintang": case "yine":
+      if(st.猜忌>=60) return ENDINGS.塞思黑();
+      if(allOk) return ENDINGS.从龙();
+      break;
+  }
+  const score = st.圣眷*1.5 - st.猜忌*1.6 + st.朝堂*0.5 + st.兵权*0.6 + st.党羽*0.5;
+  if(score>=60 && st.猜忌<=54) return ENDINGS.善终();
+  if((p==="yinsi"||p==="yintang"||p==="yine") && st.猜忌>=60) return ENDINGS.塞思黑();
+  return ENDINGS.夺爵();
+}
+
+// 结局复盘:逐条对照通关条件,标出你达成/差在哪一项
+function reviewEnding(end){
+  const r=winState(); if(!r||!r.items.length) return "";
+  const isWin=(end.key==="登基"||end.key==="铁帽子"||end.key==="从龙");
+  let html=`<div class="review"><div class="rv-h">复盘 · 你为何走到「${escapeHtml(end.title)}」</div>`;
+  html+=`<div class="rv-sub">${escapeHtml(S.prince.name)} 的通关条件 —— ${escapeHtml(r.need)}</div>`;
+  r.items.forEach(i=> html+=`<div class="rv-i ${i.ok?'ok':'no'}">${i.ok?'✓':'✗'} ${escapeHtml(i.t)}</div>`);
+  const missed=r.items.filter(i=>!i.ok);
+  if(isWin){
+    html+=`<div class="rv-c">条件尽数达成,${escapeHtml(r.need)}归你。</div>`;
+  }else if(missed.length){
+    const names=missed.map(i=>i.t.split(/\s{2,}/)[0]).join("、");
+    const tip = missed.length===1
+      ? `功亏一篑!满盘就差这一条:${escapeHtml(names)}。换你来这次必成——`
+      : `就差这 ${missed.length} 条没凑齐:${escapeHtml(names)}。`;
+    html+=`<div class="rv-c">${tip}所以止步「${escapeHtml(end.title)}」。</div>`;
+  }else{
+    html+=`<div class="rv-c">条件本已够,却因猜忌触顶或局势突变,终落「${escapeHtml(end.title)}」。</div>`;
+  }
+  return html+`</div>`;
+}
+
+// ============ 流程 ============
+document.getElementById("startBtn").onclick=()=>{
+  cfg={url:document.getElementById("baseurl").value.trim(),
+       model:document.getElementById("model").value.trim(),
+       key:document.getElementById("apikey").value.trim()};
+  try{localStorage.setItem("jzdd_key",cfg.key);}catch(e){}
+  beginGame(selectedPrince);
+};
+function beginGame(p){
+  S={prince:p, stats:{...p.start}, flags:new Set(), 记忆:[], relations:startRelations(p.id),
+     queue:buildQueue(), qi:0, year:START_YEAR, plainCount:0, affairs:[], affairsDone:{}, talkCount:0, talk:{target:null,history:[]}, scene:null};
+  document.getElementById("setup").classList.add("hidden");
+  document.getElementById("ending").classList.add("hidden");
+  document.getElementById("game").classList.remove("hidden");
+  document.getElementById("whoami").textContent=p.name+" · "+p.title;
+  document.getElementById("chronicle").innerHTML="";
+  document.getElementById("talkTarget").innerHTML="";   // 防止同会话再来一局时选项重复
+  setupTalkTargets();
+  nextScene();
+}
+
+function setupTalkTargets(){
+  const sel=document.getElementById("talkTarget");
+  const pool=[
+    {label:"康熙"},
+    {label:"八阿哥 胤禩",id:"yinsi"},
+    {label:"废太子 胤礽",id:"yinreng"},
+    {label:"十四阿哥 胤禵",id:"yinti14"},
+    {label:"三阿哥 胤祉",id:"yinzhi"},
+    {label:"佟国维(上书房大臣)"},
+    {label:"隆科多(掌九门)"},
+    {label:"年羹尧(川陕·门人)"}
+  ];
+  pool.filter(t=>t.id!==S.prince.id).forEach(t=>{
+    const o=document.createElement("option");o.value=t.label;o.textContent=t.label;sel.appendChild(o);
+  });
+}
+
+function renderHUD(){
+  const h=document.getElementById("hud");h.innerHTML="";
+  STAT_KEYS.forEach(k=>{
+    const v=Math.max(0,Math.min(100,S.stats[k]));
+    const danger = (k==="猜忌");
+    const d=document.createElement("div");
+    d.className="stat"+(danger?" danger":"");
+    d.innerHTML=`<div class="k"><span>${k}</span><span>${S.stats[k]}</span></div>
+      <div class="bar"><i style="width:${v}%"></i></div>`;
+    h.appendChild(d);
+  });
+  document.getElementById("yearlbl").textContent="康熙 "+(S.year-1661)+" 年 · 公元 "+S.year;
+  renderRelations();
+}
+function renderRelations(){
+  const el=document.getElementById("relbar"); if(!el||!S.relations) return;
+  el.innerHTML=RELATION_KEYS.map(k=>{
+    const v=Math.max(0,Math.min(100,S.relations[k]||0));
+    return `<div class="rel" title="${RELATION_DESC[k]}"><span class="rk"><span>${k}</span><b>${S.relations[k]||0}</b></span><div class="rb"><i style="width:${v}%"></i></div></div>`;
+  }).join("");
+}
+
+function pushChronicle(t){
+  S.记忆.push(t);
+  const li=document.createElement("li");li.textContent=`[${S.year}] ${t}`;
+  document.getElementById("chronicle").appendChild(li);
+}
+
+// 决定本回合情景:轮到时代事件就放主线,否则平年
+function nextScene(){
+  document.getElementById("dialogue").innerHTML="";
+  document.getElementById("zhupi").innerHTML="";
+  document.getElementById("court").innerHTML="";
+  document.getElementById("plots").innerHTML="";
+  document.getElementById("affairs").innerHTML="";
+  S.affairs=[]; S.affairsDone={};
+  document.getElementById("action").value="";
+  resetTalk();
+
+  const item=S.queue[S.qi];
+  S.year=item.year;
+  renderHUD();
+  let title,brief,isMain=(item.type==="main");
+  if(isMain){
+    title=`${item.year} · ${item.key}`;
+    brief=item.brief;
+  }else{
+    title=`${item.year} · 平年`;
+    brief=PLAINS[S.plainCount % PLAINS.length];
+    S.plainCount++;
+  }
+  S.scene={title,brief,isMain,key:item.key};
+  document.getElementById("sceneTitle").textContent=title;
+  document.getElementById("scene").textContent=brief;
+  loadTurn();
+}
+
+// 行事
+async function takeAction(actionText){
+  const errEl=document.getElementById("gameErr");errEl.textContent="";
+  const btn=document.getElementById("doBtn");const rest=document.getElementById("restBtn");
+  btn.disabled=rest.disabled=true;
+  const old=btn.innerHTML;btn.innerHTML=`<span class="spin"></span>推演中`;
+  try{
+    const r=await simulate(actionText, S.scene.title+" — "+S.scene.brief);
+    // 应用 JSON 增量(状态机)
+    if(r.属性变化){for(const k in r.属性变化){if(STAT_KEYS.includes(k)){
+      let dlt=Number(r.属性变化[k]||0);
+      if(k==="猜忌" && dlt>12) dlt=12; // 单回合猜忌涨幅封顶,杜绝一步暴毙
+      S.stats[k]=Math.max(0,Math.min(100,(S.stats[k]||0)+dlt));}}}
+    if(Array.isArray(r.新增标记)) r.新增标记.forEach(t=>t&&S.flags.add(t));
+    // 时间抚平疑心:每回合猜忌自然回落,让"蛰伏压猜忌"真的可行,不再只升不降
+    S.stats.猜忌=Math.max(0, S.stats.猜忌-4);
+    // 关系养到位 → 自动归心(终局有决定性)
+    if(S.relations.隆科多>=55) S.flags.add("隆科多归心");
+    if(S.relations.年羹尧>=55) S.flags.add("年羹尧归心");
+    // 主线特定 flag
+    if(S.scene.isMain){
+      const k=S.scene.key;
+      if(k==="大将军王" && /回京|不去|称病|留京|不出征|留在京|抗旨/.test(actionText)) S.flags.add("回京");
+      if(k==="畅春园之夜" && (S.flags.has("隆科多归心")||/御前|畅春园|侍疾|守在|宣诏|九门|隆科多/.test(actionText))) S.flags.add("御前宣诏");
+    }
+    // 站队关键词 → flag(让十三/九/十的"辅佐型"异路真正可达,而非锁死在 AI 是否 emit)
+    if(S.prince.id==="yinxiang" && /辅佐|扶保|追随|跟定|效忠|四哥|四阿哥|胤禛|雍亲/.test(actionText)) S.flags.add("辅佐四哥");
+    if((S.prince.id==="yintang"||S.prince.id==="yine") && /保八|拥八|拥立|扶保|跟定|押八|八哥|八阿哥|胤禩/.test(actionText)) S.flags.add("八爷登基");
+    // 展示
+    document.getElementById("scene").textContent=r.叙事||S.scene.brief;
+    if(r.康熙之心) document.getElementById("zhupi").innerHTML=
+      `<div class="zhupi">朱批 · 康熙之心：${escapeHtml(r.康熙之心)}</div>`;
+    if(r.诸子动向) document.getElementById("court").innerHTML=
+      `<div class="court">诸子闻讯 · ${escapeHtml(r.诸子动向)}</div>`;
+    pushChronicle((r.定性?`〔${r.定性}〕`:"")+(actionText.length>22?actionText.slice(0,22)+"…":actionText));
+    renderHUD();
+
+    // 推进:走下一回合
+    S.qi++;
+    if(S.stats.猜忌>=100 || S.qi>=S.queue.length){
+      await finish();
+    }else{
+      btn.innerHTML=old;btn.disabled=rest.disabled=false;
+      nextScene();
+      if(r.危机预告) document.getElementById("scene").textContent+="\n\n（隐忧：" + r.危机预告 + "）";
+    }
+  }catch(e){
+    errEl.textContent=e.message;
+    btn.innerHTML=old;btn.disabled=rest.disabled=false;
+  }
+}
+
+document.getElementById("doBtn").onclick=()=>{
+  const t=document.getElementById("action").value.trim();
+  if(!t){document.getElementById("gameErr").textContent="先写下你这一步要做什么。";return;}
+  takeAction(t);
+};
+document.getElementById("restBtn").onclick=()=>takeAction("按兵不动,蛰伏观望,本年不有任何显眼之举,只低调办好分内差事。");
+
+// 密会
+const talkToggle=document.getElementById("talkToggle");
+talkToggle.onclick=()=>{
+  const box=document.getElementById("talkBox");
+  const show=box.classList.contains("hidden");
+  box.classList.toggle("hidden");
+  talkToggle.classList.toggle("on",show);
+  talkToggle.textContent=show?"收起密会":"外交·密会(因人施策)";
+};
+function resetTalk(){
+  S.talk={target:null,history:[]};
+  document.getElementById("talkLog").innerHTML="";
+  document.getElementById("talkInput").value="";
+  const tp=document.getElementById("talkPlots"); if(tp) tp.innerHTML="";
+  document.getElementById("talkBox").classList.add("hidden");
+  talkToggle.classList.remove("on");talkToggle.textContent="外交·密会(因人施策)";
+}
+async function doTalk(text){
+  text=(text||"").trim(); if(!text) return;
+  S.talkCount=(S.talkCount||0)+1;
+  const target=document.getElementById("talkTarget").value;
+  const logEl=document.getElementById("talkLog");
+  S.talk.history.push({who:S.prince.name,text});
+  logEl.innerHTML+=`<div class="dlg"><div class="line"><span class="who">你：</span>${escapeHtml(text)}</div></div>`;
+  document.getElementById("talkInput").value="";
+  const send=document.getElementById("talkSend");send.disabled=true;send.textContent="…";
+  try{
+    const r=await talkReply(target,text);
+    const say=(r&&r.回话)?r.回话:(typeof r==="string"?r:"");
+    S.talk.history.push({who:target,text:say});
+    logEl.innerHTML+=`<div class="dlg"><div class="line"><span class="who">${escapeHtml(target)}：</span>${escapeHtml(say)}</div>`
+      +((r&&r.动态)?`<div class="line cmini">〔动态〕${escapeHtml(r.动态)}</div>`:"")+`</div>`;
+    const broker=RELATION_KEYS.find(k=>target.indexOf(k)>=0);
+    if(broker && r && typeof r.好感变化!=="undefined"){
+      S.relations[broker]=Math.max(0,Math.min(100,(S.relations[broker]||0)+Number(r.好感变化||0)));
+      renderRelations();
+    }
+    logEl.scrollIntoView({block:"end"});
+    refreshCourt(); // 密会之后朝局面板随之刷新,看见大臣/皇子/门人的动态变化
+  }catch(e){logEl.innerHTML+=`<div class="err">${e.message}</div>`;}
+  send.disabled=false;send.textContent="进言";
+}
+document.getElementById("talkSend").onclick=()=>doTalk(document.getElementById("talkInput").value);
+
+// 密会话术(像献策一样,不用打字,点一句直接说出去)
+async function suggestTalk(){
+  const target=document.getElementById("talkTarget").value;
+  const sys=`你是皇子幕僚。玩家要去密会【${target}】。给三到四句可直接说出口的话,每句配一个贴合此人身份与当前局势的"意图"——不要只用拉拢/试探/离间这三种笼统词,按对象挑更精准的策略:
+· 权臣门人(隆科多/年羹尧/佟国维):许诺前程、画饼、探口风、施恩、托付、敲打
+· 政敌皇子:结盟、离间、示弱、撇清、探虚实、反将一军
+· 康熙:表纯孝、自污避嫌、进言、请罪、举荐他人、以退为进
+也可自拟更贴切的意图。每句话术要真的对应那个意图、且贴合此人此刻的处境。只回 JSON:{"话":[{"式":"两到四字、精准的意图名","词":"一句直接说出口的话,30字内,与意图相符"}]}`;
+  const usr=`${worldBrief()}\n\n你正密会${target}。本年情景:${S.scene.title}。给三到四句话术。`;
+  const out=await callLLM([{role:"system",content:sys},{role:"user",content:usr}],{json:true,temp:0.95});
+  return parseJSON(out).话||[];
+}
+document.getElementById("talkPlotBtn").onclick=async()=>{
+  const b=document.getElementById("talkPlotBtn");const old=b.textContent;
+  b.disabled=true;b.innerHTML='<span class="spin"></span>拟话';
+  try{
+    const list=await suggestTalk();
+    const box=document.getElementById("talkPlots");box.innerHTML="";
+    list.slice(0,4).forEach(c=>{
+      const d=document.createElement("button");d.className="plot-chip";
+      d.innerHTML=`<b>${escapeHtml(c.式||"")}</b>${escapeHtml(c.词||"")}`;
+      d.onclick=()=>{ box.innerHTML=""; doTalk(c.词||""); };
+      box.appendChild(d);
+    });
+  }catch(e){document.getElementById("talkPlots").innerHTML='<span class="cmini">拟话失败:'+escapeHtml(e.message)+'</span>';}
+  b.disabled=false;b.textContent=old;
+};
+
+let lastEnd=null;
+// 历史上真实发生的结局只有两种:老四登基、十三得铁帽子。其余的"赢"都是改写历史。
+function isRealHistory(end){
+  return (S.prince.id==="yinzhen"&&end.key==="登基")||(S.prince.id==="yinxiang"&&end.key==="铁帽子");
+}
+async function finish(){
+  const end=computeEnding();
+  const isNewEnding=!getUnlocked().includes(end.key);
+  addUnlocked(end.key);
+  const isWin=(end.key==="登基"||end.key==="铁帽子"||end.key==="从龙");
+  const rewrote=isWin && !isRealHistory(end);
+  const freshAch=checkAchievements(end, rewrote);
+  let narr="", jin=end.verdict;
+  try{
+    const sys=`你是史官,为这盘九子夺嫡模拟器写结局。只回 JSON:{"结语":"120~200字,文白相间,苍劲克制,不堆砌","金句":"一句12~22字、能被截图单独转发的狠话,概括此结局的况味"}`;
+    const rw=rewrote?`\n注意:历史上${S.prince.name}并未得此结局,这是玩家逆天改命、改写了历史的逆袭,请在结语里写出这份"史册被你改写"的分量。`:"";
+    const usr=`${worldBrief()}\n\n【判定结局】${end.title}\n【写作要求】${end.prompt}${rw}`;
+    const out=await callLLM([{role:"system",content:sys},{role:"user",content:usr}],{json:true,temp:0.9});
+    const j=parseJSON(out); narr=j.结语||""; if(j.金句) jin=j.金句;
+  }catch(e){narr="(史官搁笔,推演接口未应:" + e.message + ")";}
+  lastEnd={end,narr,jin,rewrote};
+  document.getElementById("game").classList.add("hidden");
+  const box=document.getElementById("ending");box.classList.remove("hidden");
+  document.getElementById("shareCard").style.display="none";
+  document.getElementById("endTitle").textContent=end.title;
+  document.getElementById("endVerdict").textContent="「"+jin+"」";
+  document.getElementById("endRewrite").textContent=rewrote
+    ? "✦ 你 改 写 了 历 史 ✦"
+    : (isWin&&isRealHistory(end) ? "你走的正是真实历史 · 想改写?换八阿哥、太子或十四登基试试" : "");
+  document.getElementById("endNarr").textContent=narr;
+  // 复盘与史实揭秘默认收起(含剧透,玩家自行点开)
+  const er=document.getElementById("endReview"); er.style.display="none"; er.dataset.filled="";
+  const eh=document.getElementById("endHist"); eh.style.display="none"; eh.dataset.filled="";
+  document.getElementById("reviewBtn").textContent="查看复盘";
+  document.getElementById("histBtn").textContent="揭秘真实历史 · 含剧透";
+  const u=getUnlocked();
+  document.getElementById("endCodex").textContent=(isNewEnding?"✦ 新结局解锁 · ":"")+`结局图鉴 ${u.length} / ${ENDING_CODEX.length}`;
+  document.getElementById("endAch").textContent=freshAch.length?("✦ 解锁成就 · "+freshAch.map(a=>a.name).join("、")):"";
+  box.scrollIntoView({behavior:"smooth"});
+}
+// 复盘 / 史实揭秘:点开才看,不剧透
+document.getElementById("reviewBtn").onclick=()=>{
+  const d=document.getElementById("endReview");
+  if(d.dataset.filled!=="1"){ d.innerHTML=reviewEnding(lastEnd.end); d.dataset.filled="1"; }
+  const show=d.style.display==="none"; d.style.display=show?"block":"none";
+  document.getElementById("reviewBtn").textContent=show?"收起复盘":"查看复盘";
+};
+document.getElementById("histBtn").onclick=()=>{
+  const d=document.getElementById("endHist");
+  if(d.dataset.filled!=="1"){
+    d.innerHTML=`<div class="review"><div class="rv-h">史海钩沉 · ${escapeHtml(S.prince.name)}的真实结局</div><div class="rv-c" style="border-top:none;padding-top:2px">${escapeHtml(HIST[S.prince.id]||"")}</div></div>`;
+    d.dataset.filled="1";
+  }
+  const show=d.style.display==="none"; d.style.display=show?"block":"none";
+  document.getElementById("histBtn").textContent=show?"收起真实历史":"揭秘真实历史 · 含剧透";
+};
+
+// ---------- AI 献三策(降低书写门槛,增强互动) ----------
+async function suggestMoves(){
+  const sys=`你是皇子的幕僚谋士。针对当前情景,给出三条风格迥异、各有利弊的可行之策(如:激进结党 / 稳健办差 / 以退为进)。只回 JSON:{"计":[{"名":"四字短名","行":"一句话具体行动,可直接当作玩家的行动原话,30字内"}]}`;
+  const usr=`${worldBrief()}\n\n【本回合情景】${S.scene.title} — ${S.scene.brief}\n给三条计策。`;
+  const out=await callLLM([{role:"system",content:sys},{role:"user",content:usr}],{json:true,temp:0.95});
+  return parseJSON(out).计||[];
+}
+
+// ---------- 传播件:结局分享卡 + 小红书文案 ----------
+function buildShareCard(){
+  if(!lastEnd) return;
+  const {end,jin}=lastEnd; const p=S.prince;
+  const nums=STAT_KEYS.map(k=>`${k} ${S.stats[k]}`).join("　");
+  document.getElementById("scard").innerHTML=`
+    <div class="cap">九 子 夺 嫡 · 终 局</div>
+    <div class="who2">${escapeHtml(p.name)} · ${escapeHtml(p.title)}</div>
+    ${lastEnd.rewrote?'<div style="text-align:center;color:var(--zhu);font-size:12.5px;letter-spacing:.3em;margin-top:7px">✦ 改 写 历 史 ✦</div>':''}
+    <div class="big">${escapeHtml(end.title)}</div>
+    <div class="jin">「${escapeHtml(jin)}」</div>
+    <div class="vd">${escapeHtml(end.verdict)}</div>
+    <div class="nums">${escapeHtml(nums)}</div>
+    <div class="foot">九子九命,八条死路 · 你能让谁登基?<small>结局图鉴 ${getUnlocked().length}/${ENDING_CODEX.length} · AI 原生小游戏,康熙都是 AI 扮的</small></div>`;
+}
+function buildCaption(){
+  const {end,jin}=lastEnd; const p=S.prince;
+  const shortName=p.name.replace(/^皇.子\s*/,"");
+  const titleMap={
+    登基:`我用AI做了个九子夺嫡模拟器 选${shortName}真能闷声登基`,
+    塞思黑:`我在九子夺嫡模拟器里站了八爷党 被雍正改名叫"塞思黑"了`,
+    铁帽子:`九子夺嫡模拟器 我不抢皇位 抢成了铁帽子王`,
+    圈禁:`我用AI做的九子夺嫡模拟器 一步走错被康熙圈禁到死`,
+    夺爵:`我用AI做了个九子夺嫡模拟器 九个皇子八条都是死路`,
+    善终:`九子夺嫡模拟器 没当上皇帝 但我活到了最后`,
+    从龙:`九子夺嫡模拟器 押对了兄长 跟着鸡犬升天`
+  };
+  const title=titleMap[end.key]||"我用AI做了个九子夺嫡模拟器 九个皇子八条死路";
+  const body=
+`像崇祯模拟器那种 但是九子夺嫡版\n\n`+
+`你选一个皇子 康熙、政敌、谋士全是AI扮的 你不点选项 自己写密折、结党、装孝子 一个推演模型按真实史情算后果\n\n`+
+`最骚的是 在康熙眼皮底下 锋芒太露反而催命 八阿哥越得人心死得越快 老四"不争是争"才是天命\n\n`+
+`我这局 ${p.name}${p.title} 结局：${end.title}\n「${jin}」\n\n`+
+`九条命八条是死路 你能让谁登基`;
+  const tags=`#vibecoding #AI #九子夺嫡 #雍正 #甄嬛传 #历史 #大模型 #独立游戏 #崇祯模拟器 #清史`;
+  return `${title}\n\n${body}\n\n${tags}`;
+}
+
+// ---------- 互动按钮 ----------
+document.getElementById("plotBtn").onclick=async()=>{
+  const b=document.getElementById("plotBtn");const old=b.textContent;
+  b.disabled=true;b.innerHTML='<span class="spin"></span>谋士思量';
+  try{ renderPlots(await suggestMoves()); }
+  catch(e){document.getElementById("gameErr").textContent="献策失败:"+e.message;}
+  b.disabled=false;b.textContent=old;
+};
+document.getElementById("retryBtn").onclick=()=>{ if(S&&S.prince) beginGame(S.prince); };
+document.getElementById("shareBtn").onclick=()=>{
+  buildShareCard();
+  document.getElementById("capText").value=buildCaption();
+  const sc=document.getElementById("shareCard");sc.style.display="block";
+  sc.scrollIntoView({behavior:"smooth"});
+};
+document.getElementById("copyCap").onclick=()=>{
+  const t=document.getElementById("capText");t.select();
+  try{document.execCommand("copy");}catch(e){}
+  if(navigator.clipboard) navigator.clipboard.writeText(t.value).catch(()=>{});
+  const b=document.getElementById("copyCap");b.textContent="已复制 ✓";setTimeout(()=>b.textContent="复制文案",1500);
+};
+
+// ---------- 结局图鉴(收集驱动复玩与分享) ----------
+const ENDING_CODEX=[
+  {key:"登基",t:"承继大统"},
+  {key:"铁帽子",t:"铁帽子王"},
+  {key:"从龙",t:"从龙之臣"},
+  {key:"善终",t:"富贵闲人"},
+  {key:"夺爵",t:"夺爵幽禁"},
+  {key:"圈禁",t:"圈禁终身"},
+  {key:"塞思黑",t:"阿其那·塞思黑"}
+];
+function getUnlocked(){ try{return JSON.parse(localStorage.getItem("jzdd_unlocked")||"[]");}catch(e){return [];} }
+function addUnlocked(key){ const u=getUnlocked(); if(!u.includes(key)){u.push(key);try{localStorage.setItem("jzdd_unlocked",JSON.stringify(u));}catch(e){}} }
+function renderCodex(){
+  const u=getUnlocked();
+  const c=document.getElementById("codexCount"); if(c) c.textContent=`${u.length} / ${ENDING_CODEX.length}`;
+  const box=document.getElementById("codexList"); if(!box) return; box.innerHTML="";
+  ENDING_CODEX.forEach(e=>{
+    const got=u.includes(e.key);
+    const d=document.createElement("span");
+    d.className="codex-chip"+(got?" got":"");
+    d.textContent=got?e.t:"？？？";
+    box.appendChild(d);
+  });
+}
+// ---------- 成就系统(收集驱动复玩) ----------
+const ACHIEVEMENTS=[
+  {id:"win1",name:"初登大宝",desc:"首次以登基/铁帽子/从龙赢得一局"},
+  {id:"rewrite",name:"改写历史",desc:"让一个史上的失败者翻盘"},
+  {id:"faneight",name:"翻天",desc:"让八阿哥登基(史上最惨的他)"},
+  {id:"busheng",name:"不争是争",desc:"用四阿哥登基"},
+  {id:"lone",name:"孤胆",desc:"全程零密会赢下一局"},
+  {id:"saisihei",name:"塞外悲歌",desc:"走到阿其那·塞思黑"},
+  {id:"tiemao",name:"铁帽子",desc:"十三辅四哥得世袭罔替"},
+  {id:"hui14",name:"大将军回京",desc:"十四赶回京城继位"},
+  {id:"collect7",name:"结局大全",desc:"集齐全部七种结局"},
+  {id:"veteran",name:"夺嫡老手",desc:"累计通关五局"}
+];
+function getAch(){ try{return JSON.parse(localStorage.getItem("jzdd_ach")||"[]");}catch(e){return [];} }
+function addAch(id){ const a=getAch(); if(!a.includes(id)){a.push(id);try{localStorage.setItem("jzdd_ach",JSON.stringify(a));}catch(e){}} }
+function getStats(){ try{return JSON.parse(localStorage.getItem("jzdd_stats")||'{"games":0,"wins":0}');}catch(e){return {games:0,wins:0};} }
+function setStats(s){ try{localStorage.setItem("jzdd_stats",JSON.stringify(s));}catch(e){} }
+function renderAch(){
+  const a=getAch();
+  const c=document.getElementById("achCount"); if(c) c.textContent=`${a.length} / ${ACHIEVEMENTS.length}`;
+  const box=document.getElementById("achList"); if(!box) return; box.innerHTML="";
+  ACHIEVEMENTS.forEach(x=>{
+    const got=a.includes(x.id);
+    const d=document.createElement("span");
+    d.className="codex-chip"+(got?" got":"");
+    d.textContent=got?x.name:"？？？";
+    d.title=got?x.desc:"未解锁 · "+x.desc;
+    box.appendChild(d);
+  });
+}
+function checkAchievements(end,rewrote){
+  const p=S.prince.id, isWin=(end.key==="登基"||end.key==="铁帽子"||end.key==="从龙");
+  const st=getStats(); st.games++; if(isWin) st.wins++; setStats(st);
+  const u=getUnlocked();
+  const tests={
+    win1:isWin, rewrite:rewrote, faneight:p==="yinsi"&&end.key==="登基",
+    busheng:p==="yinzhen"&&end.key==="登基", lone:isWin&&(S.talkCount||0)===0,
+    saisihei:end.key==="塞思黑", tiemao:end.key==="铁帽子",
+    hui14:p==="yinti14"&&end.key==="登基", collect7:u.length>=7, veteran:st.games>=5
+  };
+  const fresh=[];
+  ACHIEVEMENTS.forEach(x=>{ if(tests[x.id] && !getAch().includes(x.id)){ addAch(x.id); fresh.push(x); } });
+  return fresh;
+}
+renderCodex(); renderAch();
+
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+</script>
+</body>
+</html>
