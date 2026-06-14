@@ -207,6 +207,12 @@
       <div class="princes" id="princes"></div>
     </div>
 
+    <div class="panel">
+      <h2>三 · 择两个天赋 <span id="talentCount" style="color:var(--zhu);font-size:14px;letter-spacing:.1em"></span></h2>
+      <p style="font-size:13px;color:#6b5836;margin-top:0">天赋 × 皇子,组合不同则玩法天差地别。最多选两个,也可不选。</p>
+      <div class="princes" id="talents"></div>
+    </div>
+
     <div class="panel" id="codexPanel">
       <h2>结局图鉴 <span id="codexCount" style="color:var(--zhu);font-size:14px;letter-spacing:.1em"></span></h2>
       <p style="font-size:13px;color:#6b5836;margin-top:0">九种皇子,七般结局。换着皇子玩,把"承继大统"到"阿其那·塞思黑"集齐。</p>
@@ -397,6 +403,19 @@ const HIST={
   yinxiang:"十三阿哥胤祥:雍正即位即封怡亲王、总理户部,世袭罔替,成清代仅有的恩封铁帽子王;雍正八年病逝,君臣相得始终——你这局走的正是历史。",
   yinti14:"十四阿哥胤禵:抚远大将军王远征西北,康熙大行时远在数千里外,无从介入;雍正召回,先守景陵后遭圈禁,乾隆朝方获释。"
 };
+
+// 天赋系统(借鉴人生重开模拟器:开局选2个,叠加皇子=几十种开局,重玩价值的核心)
+const TALENTS=[
+  {id:"muzu",name:"母族显贵",desc:"出身贵重 · 起手圣眷+8、佟国维好感+12",stats:{圣眷:8},relations:{佟国维:12}},
+  {id:"chengfu",name:"城府深沉",desc:"喜怒不形于色 · 起手猜忌-5,且每回合猜忌额外回落2",stats:{猜忌:-5},perTurnSuspicion:2},
+  {id:"linglong",name:"八面玲珑",desc:"最会交人 · 密会好感变化翻倍、起手党羽+5",stats:{党羽:5},talkMult:2},
+  {id:"qiandai",name:"内务府钱袋",desc:"富甲诸王 · 起手财力+25、党羽+6",stats:{财力:25,党羽:6}},
+  {id:"junggong",name:"军功彪炳",desc:"沙场扬名 · 起手兵权+18",stats:{兵权:18}},
+  {id:"guchen",name:"孤臣之相",desc:"不结私党反得清名 · 起手党羽-12、猜忌-12",stats:{党羽:-12,猜忌:-12}},
+  {id:"xiangrui",name:"天生祥瑞",desc:"深得父宠却也扎眼 · 起手圣眷+13、猜忌+6",stats:{圣眷:13,猜忌:6}},
+  {id:"wenming",name:"文名满朝",desc:"才学动公卿 · 起手贤名+16、圣眷+4",stats:{贤名:16,圣眷:4}},
+  {id:"muliao",name:"幕僚得力",desc:"门下能人辈出 · 起手党羽+8、朝堂+6",stats:{党羽:8,朝堂:6}}
+];
 
 const STAT_KEYS=["圣眷","猜忌","朝堂","兵权","贤名","党羽","财力"];
 const STAT_DESC={圣眷:"康熙的宠信",猜忌:"康熙的疑心",朝堂:"百官支持",兵权:"军事实力",贤名:"士林民望",党羽:"核心党羽",财力:"可动用之银"};
@@ -590,6 +609,23 @@ PRINCES.forEach(p=>{
   princesEl.appendChild(d);
 });
 
+// ---------- 选天赋(最多2个) ----------
+const talEl=document.getElementById("talents");
+let selectedTalents=[];
+function updTalentCount(){ const c=document.getElementById("talentCount"); if(c) c.textContent="已选 "+selectedTalents.length+"/2"; }
+TALENTS.forEach(t=>{
+  const d=document.createElement("div"); d.className="pcard";
+  d.innerHTML=`<div class="nm" style="font-size:15px">${t.name}</div><div class="ds">${t.desc}</div>`;
+  d.onclick=()=>{
+    const i=selectedTalents.indexOf(t);
+    if(i>=0){ selectedTalents.splice(i,1); d.classList.remove("sel"); }
+    else if(selectedTalents.length<2){ selectedTalents.push(t); d.classList.add("sel"); }
+    updTalentCount();
+  };
+  talEl.appendChild(d);
+});
+updTalentCount();
+
 // ---------- provider 预设 ----------
 const PRESETS={
   deepseek:{url:"https://api.deepseek.com/v1",model:"deepseek-chat"},
@@ -642,6 +678,7 @@ function worldBrief(){
 【架空声明·最要紧】本局是架空推演,储位真正空悬,以你('${p.name}')为唯一主角。最终谁登基只由本局数值与你的行动决定,绝不可假定真实历史的结果(四阿哥胤禛/雍正继位)必然发生。四阿哥在本局只是与你并列的对手之一,会随本局态势起落、未必会赢。叙述诸子与朝局时一律按本局当下局势,不得剧透或暗示历史上的最终赢家。
 【你扮演】${p.name}(${p.title})。设定:${p.persona}
 【序齿】诸子序齿:大阿哥(1)、太子胤礽(2)、三阿哥(3)、四阿哥(4)、八阿哥(8)、九阿哥(9)、十阿哥(10)、十三阿哥(13)、十四阿哥(14)。你序齿第${RANK[p.id]}。提及他人务必按与你的长幼:序齿小于你的称弟,大于你的称兄,绝不可弄错(如你扮太子,八阿哥是弟非兄)。
+【天赋】${(S.talents&&S.talents.length)?S.talents.map(t=>t.name).join("、")+"(应在叙事与诸人态度中有所体现)":"无"}
 【当前年份】${S.year}年
 【你的处境数值(0-100)】${stats}
   其中"猜忌"是康熙对你的疑心,越高越凶;满100即圈禁或赐死。"圣眷"是宠信。二者此消彼长是夺嫡命门。
@@ -927,12 +964,17 @@ document.getElementById("startBtn").onclick=()=>{
 document.getElementById("demoBtn").onclick=()=>{ beginGame(PRINCES.find(x=>x.id==="yinzhen"), true); };
 function beginGame(p, demo){
   S={prince:p, stats:{...p.start}, flags:new Set(), 记忆:[], relations:startRelations(p.id),
-     queue: demo?DEMO_QUEUE.slice():buildQueue(), qi:0, year: demo?DEMO_QUEUE[0].year:START_YEAR, plainCount:0, affairs:[], affairsDone:{}, talkCount:0, talk:{target:null,history:[]}, scene:null, demo:!!demo};
+     queue: demo?DEMO_QUEUE.slice():buildQueue(), qi:0, year: demo?DEMO_QUEUE[0].year:START_YEAR, plainCount:0, affairs:[], affairsDone:{}, talkCount:0, talk:{target:null,history:[]}, scene:null, demo:!!demo, talents:[]};
+  S.talents = demo ? [] : selectedTalents.slice();
+  S.talents.forEach(t=>{
+    if(t.stats) for(const k in t.stats){ if(STAT_KEYS.includes(k)) S.stats[k]=Math.max(0,Math.min(100,(S.stats[k]||0)+t.stats[k])); }
+    if(t.relations) for(const k in t.relations){ if(RELATION_KEYS.includes(k)) S.relations[k]=Math.max(0,Math.min(100,(S.relations[k]||0)+t.relations[k])); }
+  });
   document.getElementById("setup").classList.add("hidden");
   document.getElementById("ending").classList.add("hidden");
   document.getElementById("game").classList.remove("hidden");
   document.getElementById("demoBanner").classList.toggle("hidden", !demo);
-  document.getElementById("whoami").textContent=p.name+" · "+p.title;
+  document.getElementById("whoami").textContent=p.name+" · "+p.title+(S.talents.length?" · "+S.talents.map(t=>t.name).join("/"):"");
   document.getElementById("chronicle").innerHTML="";
   document.getElementById("talkTarget").innerHTML="";   // 防止同会话再来一局时选项重复
   setupTalkTargets();
@@ -1030,8 +1072,9 @@ async function takeAction(actionText){
       if(k==="猜忌" && dlt>12) dlt=12; // 单回合猜忌涨幅封顶,杜绝一步暴毙
       S.stats[k]=Math.max(0,Math.min(100,(S.stats[k]||0)+dlt));}}}
     if(Array.isArray(r.新增标记)) r.新增标记.forEach(t=>t&&S.flags.add(t));
-    // 时间抚平疑心:每回合猜忌自然回落,让"蛰伏压猜忌"真的可行,不再只升不降
-    S.stats.猜忌=Math.max(0, S.stats.猜忌-4);
+    // 时间抚平疑心:每回合猜忌自然回落(天赋「城府深沉」额外加成)
+    const decay=4 + (S.talents||[]).reduce((a,t)=>a+(t.perTurnSuspicion||0),0);
+    S.stats.猜忌=Math.max(0, S.stats.猜忌-decay);
     // 关系养到位 → 自动归心(终局有决定性)
     if(S.relations.隆科多>=55) S.flags.add("隆科多归心");
     if(S.relations.年羹尧>=55) S.flags.add("年羹尧归心");
@@ -1128,7 +1171,8 @@ async function doTalk(text){
       +((r&&r.动态)?`<div class="line cmini">〔动态〕${escapeHtml(r.动态)}</div>`:"")+`</div>`;
     const broker=RELATION_KEYS.find(k=>target.indexOf(k)>=0);
     if(broker && r && typeof r.好感变化!=="undefined"){
-      S.relations[broker]=Math.max(0,Math.min(100,(S.relations[broker]||0)+Number(r.好感变化||0)));
+      const mult=(S.talents||[]).some(t=>t.talkMult)?2:1; // 天赋「八面玲珑」密会好感翻倍
+      S.relations[broker]=Math.max(0,Math.min(100,(S.relations[broker]||0)+Number(r.好感变化||0)*mult));
       renderRelations();
     }
     logEl.scrollIntoView({block:"end"});
