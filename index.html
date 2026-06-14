@@ -243,6 +243,9 @@
       <div id="zhupi"></div>
       <div id="court"></div>
       <div id="delta"></div>
+      <div id="continueBar" class="hidden" style="text-align:center;margin-top:8px">
+        <button class="act" id="continueBtn">继续 ▶ 次年</button>
+      </div>
       <div id="dialogue"></div>
     </div>
 
@@ -251,7 +254,7 @@
       <div id="affairs"></div>
     </div>
 
-    <div class="panel">
+    <div class="panel" id="actPanel">
       <div id="actZone">
       <div class="row" style="margin-top:0">
         <button class="ghost" id="talkToggle">外交·密会(因人施策)</button>
@@ -278,9 +281,6 @@
         <button class="ghost" id="plotBtn">换三策</button>
       </div>
       <div class="err" id="gameErr"></div>
-      </div>
-      <div id="continueBar" class="hidden" style="text-align:center;margin-top:4px">
-        <button class="act" id="continueBtn">继续 ▶ 次年</button>
       </div>
     </div>
 
@@ -1060,10 +1060,10 @@ async function takeAction(actionText){
     S.qi++;
     S.pendingEnd = (S.stats.猜忌>=100 || S.qi>=S.queue.length);
     btn.innerHTML=old;
-    document.getElementById("actZone").style.display="none";
+    document.getElementById("actPanel").style.display="none";
     document.getElementById("continueBtn").textContent = S.pendingEnd ? "继续 ▶ 揭晓结局" : "继续 ▶ 次年";
-    const cb=document.getElementById("continueBar"); cb.classList.remove("hidden");
-    cb.scrollIntoView({behavior:"smooth",block:"nearest"});
+    document.getElementById("continueBar").classList.remove("hidden");
+    document.getElementById("sceneTitle").scrollIntoView({behavior:"smooth",block:"start"});
   }catch(e){
     errEl.textContent=e.message;
     btn.innerHTML=old;btn.disabled=rest.disabled=false;
@@ -1089,7 +1089,7 @@ function renderDelta(){
 }
 document.getElementById("continueBtn").onclick=()=>{
   document.getElementById("continueBar").classList.add("hidden");
-  document.getElementById("actZone").style.display="";
+  document.getElementById("actPanel").style.display="";
   document.getElementById("doBtn").disabled=false; document.getElementById("restBtn").disabled=false;
   if(S.pendingEnd) finish(); else nextScene();
 };
