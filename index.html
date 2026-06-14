@@ -273,6 +273,7 @@
           <select id="talkTarget" class="ghost" style="padding:8px 12px"></select>
           <button class="ghost" id="talkPlotBtn">AI 拟话术</button>
         </div>
+        <div style="font-size:12px;color:#6b5836;margin:4px 0 2px">换对象即可挨个密会 · 每人每年首次深谈才生效</div>
         <div id="talkPlots"></div>
         <div id="talkLog"></div>
         <textarea id="talkInput" placeholder="懒得打字就点上面的「AI 拟话术」直接说。也可自己写一句——许诺、画饼、施恩、离间、表孝、敲打,因人而异。这场密会会影响你本回合行事的后果。"></textarea>
@@ -1239,13 +1240,27 @@ talkToggle.onclick=()=>{
   box.classList.toggle("hidden");
   talkToggle.classList.toggle("on",show);
   talkToggle.textContent=show?"收起密会":"外交·密会(因人施策)";
+  if(show) switchTalk();
 };
+// 换对象即开一段干净的新对话(各聊各的,各自结算),实现「挨个密会」
+function switchTalk(){
+  if(!S||!S.talk) return;
+  S.talk.history=[];
+  document.getElementById("talkLog").innerHTML="";
+  const tp=document.getElementById("talkPlots"); if(tp) tp.innerHTML="";
+  document.getElementById("talkInput").value="";
+  const tgt=document.getElementById("talkTarget").value;
+  const done=S.talkedTargets&&S.talkedTargets.has(tgt);
+  const w=document.getElementById("talkWho"); if(w) w.textContent=tgt?("正密会 · "+tgt+(done?"(本年已谈)":"")):"";
+}
+document.getElementById("talkTarget").onchange=switchTalk;
 function resetTalk(){
   S.talk={target:null,history:[]};
   document.getElementById("talkLog").innerHTML="";
   document.getElementById("talkInput").value="";
   const tp=document.getElementById("talkPlots"); if(tp) tp.innerHTML="";
   document.getElementById("talkBox").classList.add("hidden");
+  const w=document.getElementById("talkWho"); if(w) w.textContent="";
   talkToggle.classList.remove("on");talkToggle.textContent="外交·密会(因人施策)";
 }
 async function doTalk(text){
